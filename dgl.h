@@ -27,30 +27,33 @@
 		5. Functions have all lower case letters
 */
 
-#ifndef DGL_HEADER_DECLARATION
-#define DGL_HEADER_DECLARATION
+#ifndef DGL_DECLARATION
+#define DGL_DECLARATION
+#define DGLAPI static
 
+#include <stdlib.h>
 #include <stdio.h>	// TODO: Maybe remove in the future, or let user choose with macro. This is only because we have functions that work with files
-
+#include <string.h> // TODO: Maybe remove (currently it is here because of memcpy)
 #include <stdint.h>
 #include <errno.h>  // TODO: Remove in the future. We can do without this
+#include <math.h>
 
 typedef enum { false, true } dgl_Bool;
 typedef float dgl_Real; // This is because we can use it to easily change precision
 typedef int dgl_Errno;
-// Saw this cool trick from 'tsoding'
+
+#define DGL_PI 3.14159265358
+
 #define DEFER_RETURN(v) do { DEFER_RESULT=v; goto DEFER; } while(0)
 
-#define DGL_OFFSET_OF(s, f) ((size_t)&(((s*)0)->f))
-#define DGL_SWAP(a, b, T) do { T t = a; a = b; b = t; } while(0)
-#define DGL_LERP(a, b, t) a+(b-a)*t
-// TODO: Fix weird behaviour
-#define DGL_CLAMP(v, l, r) (((v) < (l)) ? (l) : (((v) > (r)) ? (r) : (v)))
-
 #ifdef DGL_TARGET_WINDOWS
-    #define DGL_RGB(r, g, b) (((b) & 0xFF) | (((g) & 0xFF) << 8) | (((r) & 0xFF) << 16) | 0xFF000000)
+    #define DGL_RGB(r, g, b)     (((b) & 0xFF) | (((g) & 0xFF) << 8) | (((r) & 0xFF) << 16) | 0xFF000000)
     #define DGL_RGBA(r, g, b, a) (((b) & 0xFF) | (((g) & 0xFF) << 8) | (((r) & 0xFF) << 16) | (((a) & 0xFF) << 24))
-	
+    #define DGL_GET_ALPHA(color)    (((color) >> 24) & 0xFF)
+    #define DGL_GET_RED(color)      (((color) >> 16) & 0xFF)
+    #define DGL_GET_GREEN(color)    (((color) >>  8) & 0xFF)
+    #define DGL_GET_BLUE(color)		 ((color)        & 0xFF)
+    
 	#define DGL_WHITE	0xFFFFFFFF
 	#define DGL_BLACK	0xFF000000
 	#define DGL_RED 	0xFFFF0000
@@ -60,9 +63,13 @@ typedef int dgl_Errno;
 	#define DGL_CYAN	0xFF00FFFF
 	#define DGL_PINK	0xFFFF00FF
 #else
-    #define DGL_RGB(r, g, b) (((r) & 0xFF) | (((g) & 0xFF) << 8) | (((b) & 0xFF) << 16) | 0xFF000000)
+    #define DGL_RGB(r, g, b)     (((r) & 0xFF) | (((g) & 0xFF) << 8) | (((b) & 0xFF) << 16) | 0xFF000000)
     #define DGL_RGBA(r, g, b, a) (((r) & 0xFF) | (((g) & 0xFF) << 8) | (((b) & 0xFF) << 16) | (((a) & 0xFF) << 24))
-	
+    #define DGL_GET_ALPHA(color)    (((color) >> 24) & 0xFF)
+    #define DGL_GET_RED(color)		 ((color)        & 0xFF)
+    #define DGL_GET_GREEN(color)    (((color) >>  8) & 0xFF)
+    #define DGL_GET_BLUE(color)     (((color) >> 16) & 0xFF)
+
 	#define DGL_WHITE	0xFFFFFFFF
 	#define DGL_BLACK	0xFF000000
 	#define DGL_RED 	0xFF0000FF
@@ -72,6 +79,16 @@ typedef int dgl_Errno;
 	#define DGL_CYAN	0xFFFFFF00
 	#define DGL_PINK	0xFFFF00FF
 #endif
+
+#define DGL_OFFSET_OF(s, f) ((size_t)&(((s*)0)->f))
+#define DGL_SWAP(a, b, T) do { T t = a; a = b; b = t; } while(0)
+#define DGL_LERP(a, b, t) a+(b-a)*t
+#define DGL_SCALE_RGB(a, color) DGL_RGB((int)((a)*DGL_GET_RED(color)), (int)((a)*DGL_GET_GREEN(color)), (int)((a)*DGL_GET_BLUE(color)))
+#define DGL_SCALE_RGBA(a, color) DGL_RGBA((int)((a)*DGL_GET_RED(color)), (int)((a)*DGL_GET_GREEN(color)), (int)((a)*DGL_GET_BLUE(color)), (int)((a)*DGL_GET_ALPHA(color)))
+#define DGL_SUM_RGB(c1, c2) DGL_RGB(DGL_GET_RED(c1) + DGL_GET_RED(c2), DGL_GET_GREEN(c1) + DGL_GET_GREEN(c2), DGL_GET_BLUE(c1) + DGL_GET_BLUE(c2))
+#define DGL_SUM_RGBA(c1, c2) DGL_RGBA(DGL_GET_RED(c1) + DGL_GET_RED(c2), DGL_GET_GREEN(c1) + DGL_GET_GREEN(c2), DGL_GET_BLUE(c1) + DGL_GET_BLUE(c2), DGL_GET_ALPHA(c1) + DGL_GET_ALPHA(c2))
+// TODO: Fix weird behaviour
+#define DGL_CLAMP(v, l, r) (((v) < (l)) ? (l) : (((v) > (r)) ? (r) : (v)))
 
 #ifndef DGL_AALIAS_DEG
 	#define DGL_AALIAS_DEG 2
@@ -83,45 +100,142 @@ typedef int dgl_Errno;
 #ifndef DGL_COORDINATE_CENTER_Y
 	#define DGL_COORDINATE_CENTER_Y 0
 #endif
-// I feel like this transformation is more natural because it requires from user to enter center coordinates
-// starting from bottom-left of the screen with standard x and y directions
-// Additionaly, it allows us to specify center as (0,0) in above macros, while in the other case we wouldn't
-// be able to specify bottom-left corner starting point with macros in the same way since we would need height
+
 #define DGL_TRANSFORM_COORDINATES_X(x) ((x) + DGL_COORDINATE_CENTER_X)
 #define DGL_TRANSFORM_COORDINATES_Y(y, canvas_height) ((canvas_height)-(y) - DGL_COORDINATE_CENTER_Y)
 
-// #ifndef DGL_COORDINATE_CENTER_X
-	// #define DGL_COORDINATE_CENTER_X 0
-// #endif
-// #ifndef DGL_COORDINATE_CENTER_Y
-	// #define DGL_COORDINATE_CENTER_Y ???
-// #endif
-// This transformation requires user to enter center coordinates starting from top-left where x has standard direction
-// and y grows downward
-// This one also makes sense from the standpoint of "I will set center at the beginning and thus transform whole space to
-// use standard coordinate system with (0,0) at the bottom-left, and after it I won't think anymore about old coords)
-// But, it requires user to be aware of the old system at the beginning
-// #define DGL_TRANSFORM_COORDINATES_X(x) ((x) + DGL_COORDINATE_CENTER_X)
-// #define DGL_TRANSFORM_COORDINATES_Y(y, canvas_height) (-(y) + DGL_COORDINATE_CENTER_Y)
+typedef struct {
+	dgl_Real *cells;
+	int height;
+	int width;
+} dgl_Mat;
 
-typedef struct { int x, y; 		   } dgl_Point2D;
-typedef struct { dgl_Real x, y, z;    } dgl_Point3D;
-typedef struct { dgl_Point2D v[3]; } dgl_Triangle2D;
-typedef struct { dgl_Point3D v[3]; } dgl_Triangle3D;
+DGLAPI dgl_Mat dgl_mat_alloc(int height, int width){
+	dgl_Mat m = {};
+	m.cells = calloc(height*width, sizeof(dgl_Real));
+	m.height = height;
+	m.width = width;
+	return m;
+}
 
-inline void dgl_scale_point_2D(dgl_Point2D *p, int scale);
-inline void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
-inline void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t);
-inline void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t);
-void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle);
-void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
+DGLAPI void dgl_mat_free(dgl_Mat m){
+	free(m.cells);
+}
 
-// TODO: Create functionality to transform to normal coordinate system from the one that starts at the top left
-// TODO: This is just for testing out 3D rendering. Think more about representing models. Currently it is stupid.
+DGLAPI void dgl_mat_scale(dgl_Mat m, dgl_Real s){
+	for(int i = 0; i < m.width*m.height; ++i)
+		m.cells[i] *= s;
+}
+
+DGLAPI void dgl_mat_add(dgl_Mat m1, dgl_Mat m2){
+	if(m1.height == m2.height && m1.width == m2.width)
+		for(int i = 0; i < m1.width*m1.height; ++i)
+			m1.cells[i] += m2.cells[i];
+}
+
+DGLAPI dgl_Mat dgl_mat_mul(dgl_Mat m1, dgl_Mat m2){
+	dgl_Mat m = {};
+	if(m1.width == m2.height){
+		m = dgl_mat_alloc(m1.height, m2.width);
+		
+		for(int i = 0; i < m1.height; ++i){
+			for(int j = 0; j < m2.width; ++j){
+				for(int k = 0; k < m1.width; ++k){
+					m.cells[i*m.width + j] += m1.cells[i*m1.width + k]*m2.cells[k*m2.width + j];
+				}					
+			}
+		} 
+	}
+
+	return m;
+}
+
+// TODO: Delete this in the future since it is just for testing
+DGLAPI void dgl_mat_print(dgl_Mat m){
+	for(int i = 0; i < m.height; ++i){
+		for(int j = 0; j < m.width; ++j){
+			printf("%f ", m.cells[i*m.width + j]);
+		}
+		printf("\n");
+	}
+}
+
+typedef dgl_Real dgl_Mat4[16];
+typedef dgl_Real dgl_Vec4[4];
+
+DGLAPI void dgl_mat4_add(dgl_Mat4 m1, dgl_Mat4 m2){
+#ifdef DGL_USE_SIMD
+
+#else
+	for(int i = 0; i < 16; ++i)
+		m1[i] += m2[i];
+#endif
+}
+
+DGLAPI void dgl_mat4_compose(dgl_Mat4 m1, dgl_Mat4 m2){
+	dgl_Mat4 temp;
+	memcpy(temp, m1, 64);
+	
+	for(int i = 0; i < 4; ++i){
+		for(int j = 0; j < 4; ++j){
+			for(int k = 0; k < 4; ++k){
+				m1[i*4 + j] += temp[i*4 + k] * m2[k*4 + j];
+			}					
+		}
+	}
+}
+// 
+// dgl_Vec dgl_mat4_apply(dgl_Mat4 m, dgl_Vec4 v){
+// 
+// }
+
+DGLAPI void dgl_init_proj_params(float fov_deg, float aspect_ratio, dgl_Real *l, dgl_Real *r, dgl_Real *t, dgl_Real *b, dgl_Real n, dgl_Real f){
+	(*t) = n * tanf(fov_deg * 0.5 * DGL_PI / 180);
+	(*b) = -(*t);
+	(*r) = aspect_ratio * (*t);
+	(*l) = -(*r);
+}
+
+// These params are initialized by specifying FOV and aspect-ratio
+DGLAPI dgl_Mat dgl_mat_get_proj(dgl_Real l, dgl_Real r, dgl_Real t, dgl_Real b, dgl_Real n, dgl_Real f){
+	dgl_Mat m = dgl_mat_alloc(4, 4);
+
+	// This is OpenGL projection matrix
+	m.cells[0]  = 2*n/(r-l);
+	m.cells[2]  = (r+l)/(r-l);
+	m.cells[5]  = 2*n/(t-b);
+	m.cells[6]  = (t+b)/(t-b);
+	m.cells[10] = -(f+n)/(f-n);
+	m.cells[11] = -2*f*n/(f-n);
+	m.cells[14] = -1;
+	
+	return m;
+}
+
+typedef union {
+	struct { int x, y; };
+	int v[2];
+} dgl_Point2D;
+
+typedef union {
+	struct { dgl_Real x, y, z; };
+	dgl_Real v[3];
+} dgl_Point3D;
+
+typedef struct { dgl_Point2D v[3];	} dgl_Triangle2D;
+typedef struct { dgl_Point3D v[3];	} dgl_Triangle3D;
+
+DGLAPI inline void dgl_scale_point_2D(dgl_Point2D *p, int scale);
+DGLAPI inline void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
+DGLAPI inline void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t);
+DGLAPI inline void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t);
+DGLAPI void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle);
+DGLAPI void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
+
 // TODO: This model allows definition of colors for triangles (not interpolation based on vertices)
 // It is assumed that model consists of triangles
 // TODO: Right now, this type agregates information from various addresses in memory
-//       It would be more efficient if it was actually contigious memory
+//       It would be more efficient if it was actually continuous memory
 typedef struct{
 	dgl_Point3D *vertices;
 	int *indices;
@@ -513,56 +627,70 @@ dgl_Font dgl_Default_Font = {
 	.glyphs = &dgl_Default_Glyphs[0][0][0]	// We could just assign dgl_Default_Glyphs, but compiler gives warning
 };
 
-dgl_Errno dgl_render_ppm(dgl_Canvas *canvas, char *filename);
-dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool hasQuads);
-void dgl_delete_simple_model(dgl_Simple_Model *sm);
-dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride);
+DGLAPI dgl_Errno dgl_render_ppm(dgl_Canvas *canvas, char *filename);
+DGLAPI dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool has_quads);
+DGLAPI int dgl_save_simple_model(dgl_Simple_Model *sm, char *filename);
+DGLAPI void dgl_delete_simple_model(dgl_Simple_Model *sm);
+DGLAPI dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride);
 
-void dgl_clear(dgl_Canvas *canvas, uint32_t color);
-void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
-void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color);
-void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
-void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
-void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, uint32_t color);
-void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color);
-void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color);
-void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, const dgl_Point3D focus, uint32_t color);
-void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, const dgl_Point3D focus, uint32_t color);
+DGLAPI void dgl_clear(dgl_Canvas *canvas, uint32_t color);
+DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
+DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
+DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color);
+DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
+DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
+DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c1, uint32_t c2, uint32_t c3);
+DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, uint32_t color);
+DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color);
+DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color);
+DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
+DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
 
-void dgl_sort3(int *a, int *b, int *c);
-int dgl_clamp(int v, int left, int right);
-uint32_t dgl_blend(uint32_t f, uint32_t b);
+DGLAPI void dgl_sort3(int *a, int *b, int *c);
+DGLAPI int dgl_min3(int a, int b, int c);
+DGLAPI int dgl_max3(int a, int b, int c);
+DGLAPI int dgl_clamp(int v, int left, int right);
+DGLAPI uint32_t dgl_blend(uint32_t f, uint32_t b);
+DGLAPI uint32_t dgl_bary_color(float s, float t, uint32_t c1, uint32_t c2, uint32_t c3);
 
-void dgl_scale_point_2D(dgl_Point2D *p, int scale);
-void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
-void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t);
-void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t);
-void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle);
-void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
-	
-void dgl_draw_simple_model(dgl_Canvas *canvas, const dgl_Simple_Model *sm, const dgl_Point3D focus);
-void dgl_draw_simple_model_mesh(dgl_Canvas *canvas, const dgl_Simple_Model *sm, const dgl_Point3D focus);
-void dgl_scale_simple_model(dgl_Simple_Model *sm, dgl_Real scale);
-void dgl_translate_simple_model(dgl_Simple_Model *sm, dgl_Point3D translation);
-void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
+DGLAPI void dgl_scale_point_2D(dgl_Point2D *p, int scale);
+DGLAPI void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
+DGLAPI void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t);
+DGLAPI void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t);
+DGLAPI void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle);
+DGLAPI void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
+
+DGLAPI void dgl_draw_simple_model(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
+DGLAPI void dgl_draw_simple_model_mesh(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
+DGLAPI void dgl_scale_simple_model(dgl_Simple_Model *sm, dgl_Real scale);
+DGLAPI void dgl_translate_simple_model(dgl_Simple_Model *sm, dgl_Point3D translation);
+DGLAPI void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
 
 #endif // DGL_H
 
-#ifdef DGL_HEADER_IMPLEMENTATION
+#ifdef DGL_IMPLEMENTATION
 
-void dgl_scale_point_2D(dgl_Point2D *p, int scale){ p->x *= scale; p->y *= scale; }
-void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale){ p->x *= scale; p->y *= scale; p->z *= scale; }
-void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t){ p->x += t.x; p->y += t.y; }
-void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t){ p->x += t.x; p->y += t.y; p->z += t.z; }
-// TODO: We should also exclude this header at some point
-#include <math.h>
+// TODO: We should use this to allow the choice of using SIMD
+// Of course, on top of this, whenever we are using some simd instruction set, we would need to check if it
+// is supported
+#ifdef DGL_USE_SIMD
+#include <immintrin.h>
+typedef union { __m128 v; float s[4]; } dgl_M128;
+typedef union { __m128i v; int s[4]; } dgl_M128i;
+#endif
+
+DGLAPI void dgl_scale_point_2D(dgl_Point2D *p, int scale){ p->x *= scale; p->y *= scale; }
+DGLAPI void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale){ p->x *= scale; p->y *= scale; p->z *= scale; }
+DGLAPI void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t){ p->x += t.x; p->y += t.y; }
+DGLAPI void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t){ p->x += t.x; p->y += t.y; p->z += t.z; }
+
 // TODO: Rotation like this is of course not the best way but will do for now
-void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle){
+DGLAPI void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle){
 	dgl_Point2D tp = (*p);
 	p->x = cos(angle)*tp.x - sin(angle)*tp.y;
 	p->y = sin(angle)*tp.x + cos(angle)*tp.y;
 }
-void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z){
+DGLAPI void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z){
 	dgl_Real sin_x = sin(angle_x);
 	dgl_Real cos_x = cos(angle_x);
 	dgl_Real sin_y = sin(angle_y);
@@ -581,11 +709,10 @@ void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl
 	p->y = sin_z*tp.x + cos_z*tp.y;
 }
 
-// TODO: Blender uses coord system where z points upwards so we may need to take this into account
 // TODO: We can also write our own functionality in the future (strtok is just dumb)
 // We can load models that contain triangles and quads, but not arbitrary faces (no need for now)
 #include <string.h>
-dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool hasQuads){
+DGLAPI dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool has_quads){
 	FILE *file = fopen(filename, "r");
 	if(file == NULL) return NULL;
 
@@ -600,7 +727,7 @@ dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool hasQuads){
 	// Go through file and see how many vertices and faces are there
 	while(fgets(line, 100, file)){
 		if(line[0] == 'v' && line[1] == ' ') ++(sm->vertices_length);
-		else if(line[0] == 'f') sm->indices_length += (3 + hasQuads*3);
+		else if(line[0] == 'f') sm->indices_length += (3 + has_quads*3);
 	}
 
 	// Allocate space for vertices and indices in simple model
@@ -642,7 +769,7 @@ dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool hasQuads){
    			sm->indices[index_index++] = atoi(strtok(f3, "/")) - 1;
 
 			// If face is a quad then form additional triangle
-			if(hasQuads && f4 != NULL && f4[0] != '\n'){
+			if(has_quads && f4 != NULL && f4[0] != '\n'){
 				sm->indices[index_index++] = atoi(f1) - 1;
 				sm->indices[index_index++] = atoi(f3) - 1;
 				sm->indices[index_index++] = atoi(strtok(f4, "/")) - 1;
@@ -657,24 +784,11 @@ dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool hasQuads){
 	sm->indices_length = index_index;
 	sm->indices = temp;
 	
-	// FOR TESTING
-	// Print vertices
-	// printf("VERTICES\n");
-	// for(int i = 0; i < sm->vertices_length; ++i){
-	// 	printf("(%f, %f, %f)\n", sm->vertices[i].x, sm->vertices[i].y, sm->vertices[i].z);
-	// }
-	
-	// Print indices
-	// printf("INDICES\n");
-	// for(int i = 0; i < sm->indices_length; ++i){
-	// 	printf("%d ", sm->indices[i]);
-	// }
-	
 	fclose(file);
 	return sm;
 }
 
-void dgl_delete_simple_model(dgl_Simple_Model *sm){
+DGLAPI void dgl_delete_simple_model(dgl_Simple_Model *sm){
 	free(sm->vertices);
 	free(sm->indices);
 	free(sm->colors);
@@ -684,7 +798,7 @@ void dgl_delete_simple_model(dgl_Simple_Model *sm){
 // This is a very forceful way to reduce model complexity (by making it disconnected)
 // The reason it works is that removal of triangles will roughly be uniform because of how
 // locally close triangles are defined locally close in files
-dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride){
+DGLAPI dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride){
 	int temp_length = sm->indices_length/stride;
 	int *temp = (int *)malloc(sizeof(int)*temp_length);
 
@@ -706,10 +820,33 @@ dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride)
 
 // TODO: Create function that will take model and reduce number of triangles but still keep
 // the mesh connected (decimation algorithm)
-// TODO: Create function that will save simple model as .obj file
+
+DGLAPI int dgl_save_simple_model(dgl_Simple_Model *sm, char *filename){
+	int DEFER_RESULT = 0;
+	
+	FILE *file = fopen(filename, "w");
+	if(file == NULL) return -1;
+
+	fprintf(file, "# Dgl Simple Model [vertices: %d, indices: %d]\n", sm->vertices_length, sm->indices_length);
+
+	for(size_t i = 0; i < sm->vertices_length; ++i){
+		fprintf(file, "v %lf %lf %lf\n", sm->vertices[i].x, sm->vertices[i].y, sm->vertices[i].z);
+		if(ferror(file)) DEFER_RETURN(errno);
+	}
+
+	for(size_t i = 0; i < sm->indices_length; i += 3){
+		// Add 1 because .obj uses indexing from 1
+		fprintf(file, "f %d %d %d\n", sm->indices[i] + 1, sm->indices[i+1] + 1, sm->indices[i+2] + 1);
+		if(ferror(file)) DEFER_RETURN(errno);
+	}
+
+DEFER:
+	fclose(file);
+	return DEFER_RESULT;
+}
 
 // TODO: Adapt this code, so it fits within specific mode of operation (like DGL_TARGET_WINDOWS)
-dgl_Errno dgl_render_ppm(dgl_Canvas *canvas, char *filename){
+DGLAPI dgl_Errno dgl_render_ppm(dgl_Canvas *canvas, char *filename){
 	int DEFER_RESULT = 0;
 	
 	FILE *file = fopen(filename, "wb");
@@ -727,14 +864,14 @@ DEFER:
 	fclose(file);
 	return DEFER_RESULT;
 }
-
-void dgl_clear(dgl_Canvas *canvas, uint32_t color){
+	
+DGLAPI void dgl_clear(dgl_Canvas *canvas, uint32_t color){
 	for(size_t y = 0; y < canvas->height; ++y)
 		for(size_t x = 0; x < canvas->width; ++x)
 			DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 }
 
-void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, uint32_t color){
+DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, uint32_t color){
 	// This is because we allow vertical and horizontal drawing
 	int dy = ((vertical == true) ? font->height*scale : 0);
 	int dx = ((vertical == false) ? font->width*scale : 0);
@@ -764,7 +901,7 @@ void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl
 }
 
 // TODO: Maybe it is possible to optimize this further (important because it is also used to draw letters)
-void dgl_fill_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h, uint32_t color){
+DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h, uint32_t color){
 	x0 = DGL_TRANSFORM_COORDINATES_X(x0);
 	y0 = DGL_TRANSFORM_COORDINATES_Y(y0, canvas->height);
 	
@@ -775,9 +912,19 @@ void dgl_fill_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h, uint3
 					DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 }
 
+DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h, uint32_t color){
+	x0 = DGL_TRANSFORM_COORDINATES_X(x0);
+	y0 = DGL_TRANSFORM_COORDINATES_Y(y0, canvas->height);
+
+	dgl_draw_line_bresenham(canvas, x0, y0, x0 + w, y0, color);
+	dgl_draw_line_bresenham(canvas, x0, y0, x0, y0 + h, color);
+	dgl_draw_line_bresenham(canvas, x0 + w, y0 + h, x0, y0 + h, color);
+	dgl_draw_line_bresenham(canvas, x0 + w, y0 + h, x0 + w, y0, color);
+}
+
 // TODO: Maybe it is possible to speed this up by iterating only on the portion of circle because of its symmetry
 //		 (for example iterating over bounding box of quarter of the circle)
-void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color){
+DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color){
 	center_x = DGL_TRANSFORM_COORDINATES_X(center_x);
 	center_y = DGL_TRANSFORM_COORDINATES_Y(center_y, canvas->height);
 	
@@ -840,7 +987,7 @@ void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, u
 				}
 }
 
-void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color){
+DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color){
 	// We don't need to transform coordinates because dgl_draw_line already does it
 
 	dgl_draw_line_bresenham(canvas, t.v[0].x, t.v[0].y, t.v[1].x, t.v[1].y, color);
@@ -848,7 +995,42 @@ void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c
 	dgl_draw_line_bresenham(canvas, t.v[1].x, t.v[1].y, t.v[2].x, t.v[2].y, color);
 }
 
-void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color){
+// TODO: Move vertex color information into triangle
+// TODO: Feels like things can be optimized here, but it's not primary now
+// TODO: See how to adapt this code to SIMD
+// @Test It is roughly two times slower that other triangle filling function when using single color
+DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c1, uint32_t c2, uint32_t c3){
+   	int x0 = DGL_TRANSFORM_COORDINATES_X(t.v[0].x);
+	int y0 = DGL_TRANSFORM_COORDINATES_Y(t.v[0].y, canvas->height);
+	int x1 = DGL_TRANSFORM_COORDINATES_X(t.v[1].x);
+	int y1 = DGL_TRANSFORM_COORDINATES_Y(t.v[1].y, canvas->height);
+	int x2 = DGL_TRANSFORM_COORDINATES_X(t.v[2].x);
+	int y2 = DGL_TRANSFORM_COORDINATES_Y(t.v[2].y, canvas->height);
+
+	// Find bounding box
+	int bl = dgl_min3(x0, x1, x2);
+	int br = dgl_max3(x0, x1, x2);
+	int bt = dgl_max3(y0, y1, y2);
+	int bb = dgl_min3(y0, y1, y2);
+
+	float denom = (y1-y2)*(x0-x2) + (x2-x1)*(y0-y2);
+	
+	// Fill based on barycentric coords
+	for(int y = bb; y <= bt; ++y)
+		if(y > 0 && y < (int)canvas->height)
+			for(int x = bl; x <= br; ++x)
+				if(x > 0 && x < (int)canvas->width){
+					float l1 = ((y1-y2)*(x-x2) + (x2-x1)*(y-y2)) / denom;
+					float l2 = ((y2-y0)*(x-x2) + (x0-x2)*(y-y2)) / denom;
+					//float l3 = 1 - l1 - l2;
+
+					if(0 <= l1 && l1 <= 1 && 0 <= l2 && l2 <= 1 && (l1+l2) <= 1)
+						DGL_SET_PIXEL(*canvas, x, y, dgl_blend(dgl_bary_color(l1, l2, c1, c2, c3), DGL_GET_PIXEL(*canvas, x, y)));
+				}
+}
+
+// TODO: Find out the reason for weird shaded triangles apearing when rendering model with filled triangles
+DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color){
 	// We don't iterate through bounding square, but directly through triangle points
 	// This way, we don't need to check whether point is in triangle and we loop through half as many points
 	
@@ -866,7 +1048,7 @@ void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c
 	// Completely degenerate horizontal line triangle
 	if(y0 == y1 && y0 == y2){
 		// Horizontal line out of the screen
-		if(y0 == 0) return;
+		if(y0 < 0 || y0 >= (int)canvas->height) return;
 		
 		// Force order x0 <= x1 <= x2
 		if(x0 > x1) DGL_SWAP(x0, x1, int);
@@ -875,7 +1057,7 @@ void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c
 		
 		// Draw horizontal line
 		for(int x = x0; x <= x2; ++x)
-			if(!(x < 0) && !(x >= (int)canvas->width))
+			if(x >= 0 && x < (int)canvas->width)
 				DGL_SET_PIXEL(*canvas, x, y0, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y0)));
 		
 		return;
@@ -884,7 +1066,7 @@ void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c
 	// Completely degenerate vertical line triangle
 	if(x0 == x1 && x0 == x2){
 		// Vertical line out of the screen
-		if(x0 == 0) return;
+		if(x0 < 0 || x0 >= (int)canvas->width) return;
 		
 		// Force order y0 <= y1 <= y2
 		if(y0 > y1) DGL_SWAP(y0, y1, int);
@@ -893,7 +1075,7 @@ void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c
 		
 		// Draw vertical line
 		for(int y = y0; y <= y2; ++y)
-			if(!(y < 0) && !(y >= (int)canvas->height))
+			if(y >= 0 && y < (int)canvas->height)
 				DGL_SET_PIXEL(*canvas, x0, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x0, y)));
 		
 		return;
@@ -925,8 +1107,6 @@ void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c
 	
 	// Upper part of the triangle (bounded from below by horizontal line from (x1,y1) to line ((x0,y0),(x2,y2))
 
-	// TODO: Add triangle vertex interpolation (both for upper and lower part)
-
 	if(dy10 != 0 && dy20 != 0){
 		if(x1 > x0){
 			DGL_SWAP(dy10, dy20, int);
@@ -934,9 +1114,9 @@ void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c
 		}
 	
 		for(int y = y0; y < y1; ++y)
-			if(!(y < 0) && !(y >= (int)canvas->height))
+			if(y >= 0 && y < (int)canvas->height)
 				for(int x = dx10*(y-y0)/dy10 + x0; x <= dx20*(y-y0)/dy20 + x0; ++x)
-					if(!(x < 0) && !(x >= (int)canvas->width))
+					if(x >= 0 && x < (int)canvas->width)
 						DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 		
 		if(x1 > x0){
@@ -956,16 +1136,16 @@ void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c
 		}
 	
 		for(int y = y1_temp; y < y2; ++y)
-			if(!(y < 0) && !(y >= (int)canvas->height))
-				for(int x = dx21*(y-y1)/dy21 + x1; x <= dx20*(y-y0)/dy20 + x0; ++x)
-					if(!(x < 0) && !(x >= (int)canvas->width))
+			if(y >= 0 && y < (int)canvas->height)
+				for(int x = dx21*(y-y1)/dy21 + x1; x <= dx20*(y-y0)/dy20 + x0; ++x) 
+					if(x >= 0 && x < (int)canvas->width)
 						DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 	}
 }
 
 // This is cheap but not great way to draw line since it struggles in cases of steep slopes
 // Still, it is left here and can be used
-void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color){
+DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color){
 	x0 = DGL_TRANSFORM_COORDINATES_X(x0);
 	y0 = DGL_TRANSFORM_COORDINATES_Y(y0, canvas->height);
 	x1 = DGL_TRANSFORM_COORDINATES_X(x1);
@@ -979,9 +1159,9 @@ void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t 
 	
 	if(x1 - x0 != 0){
 		for(int x = x0; x <= x1; ++x){
-			if(!(x < 0) && !(x >= (int)canvas->width)){
+			if(x >= 0 && x < (int)canvas->width){
 				int y = ((y1 - y0)*x - (y1 - y0)*x0 + y0*(x1 - x0))/(x1 - x0);
-				if(!(y < 0) && !(y >= (int)canvas->height))
+				if(y >= 0 && y < (int)canvas->height)
 					DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 			}
 		}
@@ -990,14 +1170,14 @@ void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t 
 		if(x0 < 0 || x0 >= (int)canvas->width) return;
 		
 		for(int y = y0; y <= y1; ++y)
-			if(!(y < 0) && !(y >= (int)canvas->height))
+			if(y >= 0 && y < (int)canvas->height)
 				DGL_SET_PIXEL(*canvas, x0, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x0, y)));
 	}
 }
 
-// TODO: It might be possible to not duplicate code in if and else partts because of symmetry
-// TODO: Maybe add antialiasing capability in the future
-void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color){
+// TODO: It might be possible to not duplicate code in if and else parts because of symmetry
+// TODO: Maybe add antialiasing capability
+DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color){
 	x0 = DGL_TRANSFORM_COORDINATES_X(x0);
 	y0 = DGL_TRANSFORM_COORDINATES_Y(y0, canvas->height);
 	x1 = DGL_TRANSFORM_COORDINATES_X(x1);
@@ -1083,7 +1263,7 @@ void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1,
 		int D = 2*dy - dx;
 	
 		for(int x = x0; x <= x1; ++x){
-			if(x > 0 && x < (int)canvas->width && y > 0 && y < (int)canvas->height)
+			if(x >= 0 && x < (int)canvas->width && y >= 0 && y < (int)canvas->height)
 				DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 			
 			if(D > 0){
@@ -1118,7 +1298,7 @@ void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1,
 		int D = 2*dx - dy;
 	
 		for(int y = y0; y <= y1; ++y){
-			if(x > 0 && x < (int)canvas->width && y > 0 && y < (int)canvas->height)
+			if(x >= 0 && x < (int)canvas->width && y >= 0 && y < (int)canvas->height)
 				DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 			
 			if(D > 0){
@@ -1131,9 +1311,42 @@ void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1,
 }
 
 // TODO: For now, we are just doing orthogonal projection because it requires minimal calculation. Move to perspective projection
-// TODO: Maybe create projection screen type or something similar that will hold focus point and direction the screen is 
-void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, const dgl_Point3D focus, uint32_t color){
+// TODO: Maybe create projection screen type or something similar that will hold focus point and direction the screen is facing
+DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color){
     dgl_Triangle2D pt;
+	//dgl_Mat v = dgl_mat_alloc(4, 1);
+	
+	// Perspective projection (division by 'w' constructs NDC space (we don't need that?))
+	// We should also add clipping check after vertices have been transformed?
+	/*
+	v.cells[0] = t.v[0].x;
+	v.cells[1] = t.v[0].y;
+	v.cells[2] = t.v[0].z;
+	v.cells[3] = 1;
+	
+	v = dgl_mat_mul(proj_mat, v); 
+	pt.v[0].x = v.cells[0];
+	pt.v[0].y = v.cells[1];
+
+	v.cells[0] = t.v[1].x;
+	v.cells[1] = t.v[1].y;
+	v.cells[2] = t.v[1].z;
+	v.cells[3] = 1;
+	
+	v = dgl_mat_mul(proj_mat, v); 
+	pt.v[1].x = v.cells[0];
+	pt.v[1].y = v.cells[1];
+
+	v.cells[0] = t.v[2].x;
+	v.cells[1] = t.v[2].y;
+	v.cells[2] = t.v[2].z;
+	v.cells[3] = 1;
+	
+	v = dgl_mat_mul(proj_mat, v); 
+	pt.v[2].x = v.cells[0];
+	pt.v[2].y = v.cells[1];
+	*/
+	// Orthogonal projection
 	pt.v[0].x = t.v[0].x;
 	pt.v[0].y = t.v[0].y;
 	pt.v[1].x = t.v[1].x;
@@ -1142,37 +1355,11 @@ void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, const dgl_
 	pt.v[2].y = t.v[2].y;
 	dgl_draw_triangle_2D(canvas, pt, color);
 
+	//dgl_mat_free(v);
 }
 
-void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, const dgl_Point3D focus, uint32_t color){
-	// TODO: Currently, only x and y shift of the focus has been incorporated, but not z (MAYBE NOT WORKING)
-	
-	// Projection
-	// dgl_Triangle2D pt;
-	
-	// pt.v0.x = focus.z*(t.v0.x - focus.x)/(focus.z - t.v0.z) + focus.x;
-	// pt.v0.y = focus.z*(t.v0.y - focus.y)/(focus.z - t.v0.z) + focus.y;
-	
-	// pt.v1.x = focus.z*(t.v1.x - focus.x)/(focus.z - t.v1.z) + focus.x;
-	// pt.v1.y = focus.z*(t.v1.x - focus.x)/(focus.z - t.v1.z) + focus.y;
-	
-	// pt.v2.x = focus.z*(t.v2.x - focus.x)/(focus.z - t.v2.z) + focus.x;
-	// pt.v2.y = focus.z*(t.v2.x - focus.x)/(focus.z - t.v2.z) + focus.y;
-	
-	/*
-	
-	pt.v0.x = (focus.z*(t.v0.x - focus.x) + focus.x*(focus.z - t.v0.z))/(focus.z - t.v0.z);
-	pt.v0.y = (focus.z*(t.v0.y - focus.y) + focus.y*(focus.z - t.v0.z))/(focus.z - t.v0.z);
-	
-	pt.v1.x = focus.z*(t.v1.x - focus.x)/(focus.z - t.v1.z) + focus.x;
-	pt.v1.y = focus.z*(t.v1.x - focus.x)/(focus.z - t.v1.z) + focus.y;
-	
-	pt.v2.x = focus.z*(t.v2.x - focus.x)/(focus.z - t.v2.z) + focus.x;
-	pt.v2.y = focus.z*(t.v2.x - focus.x)/(focus.z - t.v2.z) + focus.y;
-	*/
-	
-	// 2D Drawing
-	// dgl_fill_triangle_2D(canvas, pt, color);
+DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color){
+	// Perspective projection
 	
 	// Orthogonal projection (seems to work)
 	dgl_Triangle2D pt;
@@ -1182,113 +1369,153 @@ void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, const dgl_
 	pt.v[1].y = t.v[1].y;
 	pt.v[2].x = t.v[2].x;
 	pt.v[2].y = t.v[2].y;
-	dgl_fill_triangle_2D(canvas, pt, color);
+	//dgl_fill_triangle_2D(canvas, pt, color);
+	dgl_fill_triangle_bary_2D(canvas, pt, DGL_RED, DGL_GREEN, DGL_BLUE);
 }
-
-// TODO: Create rendering of simple model mesh edges so that we can work with models
-//       without worrying about which faces should be rendered
 
 // Currently, there is no checking which triangles are further away
 // Colors will be looped, so we don't need to provide as many colors as there are triangles
-void dgl_draw_simple_model(dgl_Canvas *canvas, const dgl_Simple_Model *sm, const dgl_Point3D focus){
-	// TODO: Add some simple differentiation between closer and furhter triangle of the model
+DGLAPI void dgl_draw_simple_model(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat){
+	// TODO: Add some simple differentiation between closer and further triangles of the model
 	dgl_Triangle3D t;
 	
 	for(size_t i = 0; i < sm->indices_length/3; ++i){
 		for(size_t j = 0; j < 3; ++j)
 			t.v[j] = sm->vertices[sm->indices[i*3 + j]];
 		
-		dgl_fill_triangle_3D(canvas, t, focus, sm->colors[i % sm->colors_length]);
+		dgl_fill_triangle_3D(canvas, t, proj_mat, sm->colors[i % sm->colors_length]);
 	}
 }
 
-void dgl_draw_simple_model_mesh(dgl_Canvas *canvas, const dgl_Simple_Model *sm, const dgl_Point3D focus){
+// TODO: Make this more efficient by doing the projection of all points and then rendering
+// 2D triangles instead of iterating over 3D triangles and rendering them.
+DGLAPI void dgl_draw_simple_model_mesh(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat){
 	dgl_Triangle3D t;
 
 	for(size_t i = 0; i < sm->indices_length/3; ++i){
 		for(size_t j = 0; j < 3; ++j)
 			t.v[j] = sm->vertices[sm->indices[i*3 + j]];
 		
-		dgl_draw_triangle_3D(canvas, t, focus, sm->colors[i % sm->colors_length]);
+		dgl_draw_triangle_3D(canvas, t, proj_mat, sm->colors[i % sm->colors_length]);
 	}
 }
 
-void dgl_scale_simple_model(dgl_Simple_Model *sm, dgl_Real scale){
+DGLAPI void dgl_scale_simple_model(dgl_Simple_Model *sm, dgl_Real scale){
 	for(size_t i = 0; i < sm->vertices_length; ++i)
 		dgl_scale_point_3D(&(sm->vertices[i]), scale);
 }
 
-void dgl_translate_simple_model(dgl_Simple_Model *sm, dgl_Point3D translation){
+DGLAPI void dgl_translate_simple_model(dgl_Simple_Model *sm, dgl_Point3D translation){
 	for(size_t i = 0; i < sm->vertices_length; ++i)
 		dgl_translate_point_3D(&(sm->vertices[i]), translation);
 }
 
-void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z){
+DGLAPI void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z){
 	for(size_t i = 0; i < sm->vertices_length; ++i)
 		dgl_rotate_point_3D(&(sm->vertices[i]), angle_x, angle_y, angle_z);
 }
 
+#ifdef DGL_USE_SIMD
+DGLAPI __m128i dgl_mm_mul_epi32(__m128i a, __m128i b){
+	__m128i a13    = _mm_shuffle_epi32(a, 0xF5);          // (-,a3,-,a1)
+	__m128i b13    = _mm_shuffle_epi32(b, 0xF5);          // (-,b3,-,b1)
+	__m128i prod02 = _mm_mul_epu32(a, b);                 // (-,a2*b2,-,a0*b0)
+	__m128i prod13 = _mm_mul_epu32(a13, b13);             // (-,a3*b3,-,a1*b1)
+	__m128i prod01 = _mm_unpacklo_epi32(prod02,prod13);   // (-,-,a1*b1,a0*b0) 
+	__m128i prod23 = _mm_unpackhi_epi32(prod02,prod13);   // (-,-,a3*b3,a2*b2) 
+	__m128i prod   = _mm_unpacklo_epi64(prod01,prod23);   // (ab3,ab2,ab1,ab0)
+	return prod;
+}
+#endif
+
 // TODO: It might be possible to speed this up further by expanding multiples of 255
 // as series, measuring the error, and adjusting result by a constant factor so that
 // we don't lose information
-uint32_t dgl_blend(uint32_t f, uint32_t b){
+
+unsigned int vta1[4] __attribute__((aligned(16)));
+unsigned int vta2[4] __attribute__((aligned(16)));
+unsigned int vta3[4] __attribute__((aligned(16)));
+unsigned int vta4[4] __attribute__((aligned(16)));
+DGLAPI uint32_t dgl_blend(uint32_t f, uint32_t b){
+	// These were used in dgl_Real arithmetic
+	// uint32_t alpha 	= (uint32_t)((a1    +    a2*(1-a1))*255);
+	// uint32_t red 	= (uint32_t)((a1*r1 + r2*a2*(1-a1))*255);
+	// uint32_t green 	= (uint32_t)((a1*g1 + g2*a2*(1-a1))*255);
+	// uint32_t blue 	= (uint32_t)((a1*b1 + b2*a2*(1-a1))*255);
 
 	// ONLY WITH INTEGER ARITHMETIC
 	uint8_t a1 = ((f >> 24) & 0xFF);
 	uint8_t a2 = ((b >> 24) & 0xFF);
-	
+		
 	uint8_t r1 = (f & 0xFF);
 	uint8_t r2 = (b & 0xFF);
-	
+		
 	uint8_t g1 = ((f >> 8) & 0xFF);
 	uint8_t g2 = ((b >> 8) & 0xFF);
-	
+		
 	uint8_t b1 = ((f >> 16) & 0xFF);
 	uint8_t b2 = ((b >> 16) & 0xFF);
-	
-	// Attempt at further optimization: reduce division to shifting while keeping all the information (if possible)
-	/*
-	q = (1/256) = 2^(-8) = (>>8)
-	1/255 = 1/(256-1) = (1/256)/(1 - (1/256)) = q*(q^0 + q^1 + q^2 + ...) ~ q*(q^0 + q^1) ~ q + q^2
-	
-	MAYBE ADD SOME CONSTANT TO APPROXIMATION?
-	
-	WITHOUT CONSTANT (not working, a lot of information lost this way)
-	=>
-	(1/255)*X = (q + q^2)*X = ((256 + 1)/(256^2))*X = (X*(256 + 1))/(256^2) = (257*X)>>16
-	(1/65025)*X = (257*((257*X)>>16))>>16
-	
-	*/
-	
-	// These were used in dgl_Real arithmetic
-	// uint32_t alpha 	= (uint32_t)((a1 + (1-a1)*a2)*255);
-	// uint32_t red 	= (uint32_t)((a1*r1 + r2*a2*(1-a1))*255);
-	// uint32_t green 	= (uint32_t)((a1*g1 + g2*a2*(1-a1))*255);
-	// uint32_t blue 	= (uint32_t)((a1*b1 + b2*a2*(1-a1))*255);
-	
-	uint8_t red = (255*(a1*r1 + a2*r2) - a1*a2*r2)/65025;
-	uint8_t green = (255*(a1*g1 + a2*g2) - a1*a2*g2)/65025;
-	uint8_t blue = (255*(a1*b1 + a2*b2) - a1*a2*b2)/65025;
-	uint8_t alpha = (255*(a1+a2) - a1*a2)/255;
-	
-	return (alpha << 24) + (blue << 16) + (green << 8) + red;
+
+	// TODO: Check if it is faster to precompute these shared parts
+	// (maybe not if the compiler does is silently)
+	// uint16_t t1 = 255*a1;
+	// uint16_t t2 = (255-a1)*a2;
+
+	// Instead of dividing by 65025 or 255, we accept the error and approximate it with shift
+	// I feel like error can be adjusted by a constant factor so that we still cover the whole color range
+	// after this step
+	uint8_t red   = (255*a1*r1 + (255-a1)*a2*r2) >> 16;
+	uint8_t green = (255*a1*g1 + (255-a1)*a2*g2) >> 16;
+	uint8_t blue  = (255*a1*b1 + (255-a1)*a2*b2) >> 16;
+	uint8_t alpha = (255*a1    + (255-a1)*a2   ) >> 8;
+	  	
+	return (alpha << 24) | (blue << 16) | (green << 8) | red;
 }
 
-void dgl_sort3(int *a, int *b, int *c){
+DGLAPI void dgl_sort3(int *a, int *b, int *c){
 	if(*a > *b) DGL_SWAP(*a, *b, int);
 	if(*b > *c) DGL_SWAP(*b, *c, int);
 	if(*a > *b) DGL_SWAP(*a, *b, int);
 }
 
+DGLAPI int dgl_min3(int a, int b, int c){
+	if(a < b){
+		if(a < c) return a;
+		else return c;
+	}
+	else{
+		if(b < c) return b;
+		else return c;
+	}
+}
+
+DGLAPI int dgl_max3(int a, int b, int c){
+	if(a > b){
+		if(a > c) return a;
+		else return c;
+	}
+	else{
+		if(b > c) return b;
+		else return c;
+	}
+}
+
+DGLAPI uint32_t dgl_bary_color(float s, float t, uint32_t c1, uint32_t c2, uint32_t c3){
+	uint32_t a = DGL_SCALE_RGB(s, c1);
+	uint32_t b = DGL_SCALE_RGB(t, c2);
+	uint32_t c = DGL_SCALE_RGB(1-s-t, c3);
+	return DGL_SUM_RGB(DGL_SUM_RGB(a, b), c);
+}
+
 // TODO: Maybe make it a macro
 // TODO: Maybe make it branchless
-int dgl_clamp(int v, int left, int right){
+DGLAPI int dgl_clamp(int v, int left, int right){
 	if(v < left) return left;
 	if(v > right) return right;
 	return v;
 }
 
-static inline uint32_t DGL_RGBA_TO_BGRA(uint32_t v){
+DGLAPI inline uint32_t DGL_RGBA_TO_BGRA(uint32_t v){
 	uint8_t t = v & 0xFF;
 	v &= 0xFFFFFF00;
 	v |= ((v & 0x00FF0000) >> 16);
@@ -1298,11 +1525,217 @@ static inline uint32_t DGL_RGBA_TO_BGRA(uint32_t v){
 }
 
 // TODO: See the point of adding static inline to functions (with some macro) that are part of the library
-// TODO: Maybe separate header part from implementation by providing implementation only if the specific macro is defined
-// TODO: Add ability to render models (simpler to complex)(from standard files like .obj)(or define own simple format)
+// TODO: Add some basic matrix support with SIMD
 // TODO: Add ability to triangulate and render surfaces
 // TODO: Create UI elements like buttons
-// TODO: Using PPM files as textures
-// TODO: SIMD processing
 
-#endif // DGL_HEADER_IMPLEMENTATION
+#endif // DGL_IMPLEMENTATION
+
+#ifdef DGL_USE_ENGINE
+
+#define DEFAULT_WINDOW_WIDTH  800
+#define DEFAULT_WINDOW_HEIGHT 600
+
+typedef struct {
+	int width;
+	int height;
+	dgl_Canvas canvas;
+	dgl_Canvas back_canvas;
+} dgl_Window;
+
+dgl_Window window = {};
+unsigned int fps = 60;
+
+void init_window_params(int width, int height){
+	window.width = width;
+	window.height = height;
+}
+
+void init_fps(unsigned int v){
+	fps = v;
+}
+
+#ifdef DGL_TARGET_WINDOWS
+#include <windows.h>
+#include <windowsx.h>
+
+typedef struct{
+	HBITMAP hbm;
+	uint32_t* data;
+	BITMAPINFO bmi;
+}dgl_Dib_Buffer;
+
+BITMAPINFO dgl_get_bitmap_info(int width, int height) {
+	BITMAPINFOHEADER bmi_h = {};
+	bmi_h.biSize = sizeof(BITMAPINFOHEADER);
+	bmi_h.biWidth = width;
+	bmi_h.biHeight = -height;
+	bmi_h.biPlanes = 1;
+	bmi_h.biBitCount = 32;
+	bmi_h.biCompression = BI_RGB;
+	
+	BITMAPINFO bmi = {};
+	bmi.bmiHeader = bmi_h;
+
+	return bmi;
+}
+
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+void init();
+void start();
+void update(float dt);
+void end();
+
+void windows_init(){
+	init();
+
+	if(window.width == 0) window.width = DEFAULT_WINDOW_WIDTH;
+	if(window.height == 0) window.height = DEFAULT_WINDOW_HEIGHT;
+	
+	window.canvas.pixels = malloc(sizeof(uint32_t) * window.width * window.height);
+	window.canvas.width = window.width;
+	window.canvas.height = window.height;
+	window.canvas.stride = window.width;
+
+	window.back_canvas.pixels = malloc(sizeof(uint32_t) * window.width * window.height);
+	window.back_canvas.width = window.width;
+	window.back_canvas.height = window.height;
+	window.back_canvas.stride = window.width;
+}
+
+void windows_start(){
+	start();
+}
+
+LARGE_INTEGER var_fps_ticks_start;
+LARGE_INTEGER var_fps_ticks_end;
+POINT cursorPos = {};
+void windows_update(HWND hwnd, float dt){
+	//QueryPerformanceCounter(&var_fps_ticks_start);
+
+	GetCursorPos(&cursorPos);
+	ScreenToClient(hwnd, &cursorPos);
+
+	memcpy(window.canvas.pixels, window.back_canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
+	
+	update(dt);
+
+	//QueryPerformanceCounter(&var_fps_ticks_end);
+}
+
+void windows_end(){
+	end();
+}
+
+// TODO: Window drawing area should be adjusted so that user defined width and height
+// don't include window borders.
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow){
+	LARGE_INTEGER performance_frequency;
+	QueryPerformanceFrequency(&performance_frequency);
+
+	windows_init();
+
+	MSG msg;
+	HWND hwnd;
+	WNDCLASSW wc;
+	
+	wc.style         = CS_HREDRAW | CS_VREDRAW;
+    wc.cbClsExtra    = 0;
+    wc.cbWndExtra    = 0;
+    wc.lpszClassName = L"Window";
+    wc.hInstance     = hInstance;
+    wc.lpszMenuName  = NULL;
+    wc.lpfnWndProc   = WndProc;
+
+	RegisterClassW(&wc);
+
+	// TODO: Change to CreateWindowEx version
+	hwnd = CreateWindowW(wc.lpszClassName, L"Engine",
+						 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+						 100, 100, window.width, window.height, NULL, NULL, hInstance, NULL);
+
+	ShowWindow(hwnd, nCmdShow);
+
+	LARGE_INTEGER ticks_start;
+	LARGE_INTEGER ticks_end;
+	
+	QueryPerformanceCounter(&ticks_start);
+	QueryPerformanceCounter(&ticks_end);
+
+	float time_acc = 0;
+	float time_slice = 0;
+
+	time_slice = 1.0/fps;
+	time_slice -= 0.01*time_slice;	// THIS IS EXPERIMENTAL ADJUSTMENT (so that we get precisely defined FPS)
+	
+	while(msg.message != WM_QUIT){
+		// PeekMessage will not block if there are no messages (GetMessage will)
+		if(PeekMessage(&msg, 0, 0, 0, PM_REMOVE)){
+			// Most messages are sent directly to window procedure
+			// Those that are not include: WM_PAINT, keyboard related messages, mouse related messages
+			// When key is pressed, it is sent through queue as a virtual key code
+			// The purpose of TranslateMessage is to take that code and generate corresponding message of type WM_CHAR
+			// This way, we can have WM_CHAR case in window procedure, and get its data from WPARAM and LPARAM
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else{
+			// Accumulate time to roughly match expected frame duration for the given FPS
+			ticks_start = ticks_end;
+			QueryPerformanceCounter(&ticks_end);
+
+			time_acc += (float)(ticks_end.QuadPart - ticks_start.QuadPart)/(float)performance_frequency.QuadPart;
+			
+			// Update things after accumulated time and prepare for next accumulation
+			if(time_acc > time_slice){
+				windows_update(hwnd, time_acc);
+				InvalidateRect(hwnd, NULL, FALSE);
+				
+				time_acc = 0;
+			}
+		}
+	}
+	
+	return (int)msg.wParam;
+}
+
+PAINTSTRUCT	 ps;
+HDC			 hdc;
+BITMAPINFO   bmi;
+RECT         rect;
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
+    switch(msg) {
+	case WM_CREATE:
+		{
+			windows_start();
+			bmi = dgl_get_bitmap_info(window.width, window.height);
+		} break;
+	case WM_PAINT:
+		{
+			GetClientRect(hwnd, &rect);
+			window.width = rect.right - rect.left;
+			window.height = rect.bottom - rect.top;
+
+			hdc = BeginPaint(hwnd, &ps);
+			StretchDIBits(hdc,
+						  0, 0, window.width, window.height,
+						  0, 0, window.canvas.width, window.canvas.height,
+						  window.canvas.pixels, &bmi,
+						  DIB_RGB_COLORS, SRCCOPY);
+			EndPaint(hwnd, &ps);		
+		} break;
+	case WM_DESTROY:	// Used to terminate window
+		{
+			PostQuitMessage(0);	// Generate WM_QUIT message and send it to queue (used to terminate application)
+			windows_end();
+		} break;
+    }
+
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+#endif // DGL_USE_ENGINE::DGL_TARGET_WINDOWS
+
+#endif // DGL_USE_ENGINE
+
