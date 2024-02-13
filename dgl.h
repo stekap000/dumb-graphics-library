@@ -212,15 +212,18 @@ DGLAPI dgl_Mat dgl_mat_get_proj(dgl_Real l, dgl_Real r, dgl_Real t, dgl_Real b, 
 	return m;
 }
 
-typedef union {
-	struct { int x, y; };
-	int v[2];
-} dgl_Point2D;
+//typedef union {
+// 	struct { int x, y; };
+// 	int v[2];
+//} dgl_Point2D;
+// 
+//typedef union {
+// 	struct { dgl_Real x, y, z; };
+// 	dgl_Real v[3];
+//} dgl_Point3D;
 
-typedef union {
-	struct { dgl_Real x, y, z; };
-	dgl_Real v[3];
-} dgl_Point3D;
+typedef struct { int x, y; } dgl_Point2D;
+typedef struct { dgl_Real x, y, z; } dgl_Point3D;
 
 typedef struct { dgl_Point2D v[3];	} dgl_Triangle2D;
 typedef struct { dgl_Point3D v[3];	} dgl_Triangle3D;
@@ -248,10 +251,10 @@ typedef struct{
 // This is useful since it allows us to operate only on one portion of pixels (for example use dgl_clear just on one portion)
 typedef struct{
 	uint32_t *pixels;
-	size_t width;
-	size_t height;
+	int width;
+	int height;
 	int stride;
-}dgl_Canvas;
+} dgl_Canvas;
 
 #define DGL_GET_PIXEL(canvas, x, y) (canvas).pixels[(y)*(canvas).stride + (x)]
 #define DGL_SET_PIXEL(canvas, x, y, v) (canvas).pixels[(y)*(canvas).stride + (x)] = (v)
@@ -855,7 +858,7 @@ DGLAPI dgl_Errno dgl_render_ppm(dgl_Canvas *canvas, char *filename){
 	fprintf(file, "P6\n%d %d\n255\n", (unsigned int)canvas->width, (unsigned int)canvas->height);
 	if(ferror(file)) DEFER_RETURN(errno);
 	
-	for(size_t i = 0; i < canvas->width*canvas->height; ++i){
+	for(int i = 0; i < canvas->width*canvas->height; ++i){
 		fwrite(&canvas->pixels[i], sizeof(char), 3, file);
 		if(ferror(file)) DEFER_RETURN(errno);
 	}
@@ -866,8 +869,8 @@ DEFER:
 }
 	
 DGLAPI void dgl_clear(dgl_Canvas *canvas, uint32_t color){
-	for(size_t y = 0; y < canvas->height; ++y)
-		for(size_t x = 0; x < canvas->width; ++x)
+	for(int y = 0; y < canvas->height; ++y)
+		for(int x = 0; x < canvas->width; ++x)
 			DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 }
 
@@ -1428,14 +1431,6 @@ DGLAPI __m128i dgl_mm_mul_epi32(__m128i a, __m128i b){
 }
 #endif
 
-// TODO: It might be possible to speed this up further by expanding multiples of 255
-// as series, measuring the error, and adjusting result by a constant factor so that
-// we don't lose information
-
-unsigned int vta1[4] __attribute__((aligned(16)));
-unsigned int vta2[4] __attribute__((aligned(16)));
-unsigned int vta3[4] __attribute__((aligned(16)));
-unsigned int vta4[4] __attribute__((aligned(16)));
 DGLAPI uint32_t dgl_blend(uint32_t f, uint32_t b){
 	// These were used in dgl_Real arithmetic
 	// uint32_t alpha 	= (uint32_t)((a1    +    a2*(1-a1))*255);
@@ -1507,8 +1502,6 @@ DGLAPI uint32_t dgl_bary_color(float s, float t, uint32_t c1, uint32_t c2, uint3
 	return DGL_SUM_RGB(DGL_SUM_RGB(a, b), c);
 }
 
-// TODO: Maybe make it a macro
-// TODO: Maybe make it branchless
 DGLAPI int dgl_clamp(int v, int left, int right){
 	if(v < left) return left;
 	if(v > right) return right;
@@ -1524,7 +1517,6 @@ DGLAPI inline uint32_t DGL_RGBA_TO_BGRA(uint32_t v){
 	return v;
 }
 
-// TODO: See the point of adding static inline to functions (with some macro) that are part of the library
 // TODO: Add some basic matrix support with SIMD
 // TODO: Add ability to triangulate and render surfaces
 // TODO: Create UI elements like buttons
@@ -1543,7 +1535,7 @@ typedef struct {
 	dgl_Canvas back_canvas;
 } dgl_Window;
 
-dgl_Window window = {};
+dgl_Window window = { };
 unsigned int fps = 60;
 
 void init_window_params(int width, int height){
@@ -1592,13 +1584,13 @@ void windows_init(){
 
 	if(window.width == 0) window.width = DEFAULT_WINDOW_WIDTH;
 	if(window.height == 0) window.height = DEFAULT_WINDOW_HEIGHT;
-	
-	window.canvas.pixels = malloc(sizeof(uint32_t) * window.width * window.height);
+		
+	window.canvas.pixels = calloc(window.width * window.height, sizeof(uint32_t));
 	window.canvas.width = window.width;
 	window.canvas.height = window.height;
 	window.canvas.stride = window.width;
 
-	window.back_canvas.pixels = malloc(sizeof(uint32_t) * window.width * window.height);
+	window.back_canvas.pixels = calloc(window.width * window.height, sizeof(uint32_t));
 	window.back_canvas.width = window.width;
 	window.back_canvas.height = window.height;
 	window.back_canvas.stride = window.width;
@@ -1608,18 +1600,22 @@ void windows_start(){
 	start();
 }
 
+uint32_t *ppp;
+
 LARGE_INTEGER var_fps_ticks_start;
 LARGE_INTEGER var_fps_ticks_end;
 POINT cursorPos = {};
 void windows_update(HWND hwnd, float dt){
 	//QueryPerformanceCounter(&var_fps_ticks_start);
 
-	GetCursorPos(&cursorPos);
-	ScreenToClient(hwnd, &cursorPos);
+	//GetCursorPos(&cursorPos);
+	//ScreenToClient(hwnd, &cursorPos);
 
 	memcpy(window.canvas.pixels, window.back_canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
 	
 	update(dt);
+
+	memcpy(ppp, window.canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
 
 	//QueryPerformanceCounter(&var_fps_ticks_end);
 }
@@ -1645,6 +1641,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
     wc.cbWndExtra    = 0;
     wc.lpszClassName = L"Window";
     wc.hInstance     = hInstance;
+	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
     wc.lpszMenuName  = NULL;
     wc.lpfnWndProc   = WndProc;
 
@@ -1667,8 +1664,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
 	float time_slice = 0;
 
 	time_slice = 1.0/fps;
-	time_slice -= 0.01*time_slice;	// THIS IS EXPERIMENTAL ADJUSTMENT (so that we get precisely defined FPS)
-	
+	time_slice -= 0.01*time_slice;	// Experimental adjustment
+
 	while(msg.message != WM_QUIT){
 		// PeekMessage will not block if there are no messages (GetMessage will)
 		if(PeekMessage(&msg, 0, 0, 0, PM_REMOVE)){
@@ -1686,6 +1683,31 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
 			QueryPerformanceCounter(&ticks_end);
 
 			time_acc += (float)(ticks_end.QuadPart - ticks_start.QuadPart)/(float)performance_frequency.QuadPart;
+			// Update things after accumulated time and prepare for next accumulation
+			if(time_acc > time_slice){
+				windows_update(hwnd, time_acc);
+				InvalidateRect(hwnd, NULL, FALSE);
+				
+				time_acc = 0;
+			}
+		}
+	}
+
+	/*
+	while(running) {
+		while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		if(msg.message == WM_QUIT) {
+			running = false;
+		}
+		else {
+			ticks_start = ticks_end;
+			QueryPerformanceCounter(&ticks_end);
+
+			time_acc += (float)(ticks_end.QuadPart - ticks_start.QuadPart)/(float)performance_frequency.QuadPart;
 			
 			// Update things after accumulated time and prepare for next accumulation
 			if(time_acc > time_slice){
@@ -1696,39 +1718,62 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
 			}
 		}
 	}
+	*/
 	
 	return (int)msg.wParam;
 }
 
 PAINTSTRUCT	 ps;
-HDC			 hdc;
+HDC			 hdc, hdc_temp;
 BITMAPINFO   bmi;
 RECT         rect;
+HBITMAP bitmapHandle;
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
     switch(msg) {
 	case WM_CREATE:
 		{
 			windows_start();
-			bmi = dgl_get_bitmap_info(window.width, window.height);
+			
+			bmi = dgl_get_bitmap_info(window.canvas.width, window.canvas.height);
+			bitmapHandle = CreateDIBSection(NULL, &bmi, DIB_RGB_COLORS, &ppp, 0, 0);
+
+			memcpy(window.canvas.pixels, window.back_canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
+		
+			memcpy(ppp, window.canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
+
+			//srcHdc = CreateCompatibleDC(hdc);
 		} break;
 	case WM_PAINT:
 		{
-			GetClientRect(hwnd, &rect);
-			window.width = rect.right - rect.left;
-			window.height = rect.bottom - rect.top;
+			//GetClientRect(hwnd, &rect);
+			//window.width = rect.right - rect.left;
+			//window.height = rect.bottom - rect.top;
 
 			hdc = BeginPaint(hwnd, &ps);
-			StretchDIBits(hdc,
-						  0, 0, window.width, window.height,
-						  0, 0, window.canvas.width, window.canvas.height,
-						  window.canvas.pixels, &bmi,
-						  DIB_RGB_COLORS, SRCCOPY);
+
+			hdc_temp = CreateCompatibleDC(hdc);
+			SelectObject(hdc_temp, bitmapHandle);
+			BitBlt(hdc, 0, 0, window.canvas.width, window.canvas.height, hdc_temp, 0, 0, SRCCOPY);
+			DeleteDC(hdc_temp);
+
+
+			//memcpy(ppp, window.canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
+
+			//hdc = BeginPaint(hwnd, &ps);
+			//StretchDIBits(hdc,
+			//			  0, 0, window.width, window.height,
+			//			  0, 0, window.canvas.width, window.canvas.height,
+			//			  window.canvas.pixels, &bmi,
+			//			  DIB_RGB_COLORS, SRCCOPY);
+			//SelectObject(srcHdc, bitmapHandle);
+			//BitBlt(hdc, 0, 0, window.canvas.width, window.canvas.height, srcHdc, 0, 0, SRCCOPY);
+				   
 			EndPaint(hwnd, &ps);		
 		} break;
-	case WM_DESTROY:	// Used to terminate window
+	case WM_DESTROY:
 		{
-			PostQuitMessage(0);	// Generate WM_QUIT message and send it to queue (used to terminate application)
-			windows_end();
+			//windows_end();
+			PostQuitMessage(0);
 		} break;
     }
 
