@@ -38,6 +38,8 @@
 #include <errno.h>  // TODO: Remove in the future. We can do without this
 #include <math.h>
 
+// TODO: Add inclusion for C++
+
 typedef enum { false, true } dgl_Bool;
 typedef float dgl_Real; // This is because we can use it to easily change precision
 typedef int dgl_Errno;
@@ -1535,7 +1537,7 @@ typedef struct {
 	dgl_Canvas back_canvas;
 } dgl_Window;
 
-dgl_Window window = { };
+dgl_Window window = {0};
 unsigned int fps = 60;
 
 void init_window_params(int width, int height){
@@ -1551,6 +1553,12 @@ void init_fps(unsigned int v){
 #include <windows.h>
 #include <windowsx.h>
 
+void write_debug_string(char *str){
+	FILE *dbf = fopen("debug.txt", "a");
+	fprintf(dbf, "%s\n", str);
+	fclose(dbf);
+}
+
 typedef struct{
 	HBITMAP hbm;
 	uint32_t* data;
@@ -1558,7 +1566,7 @@ typedef struct{
 }dgl_Dib_Buffer;
 
 BITMAPINFO dgl_get_bitmap_info(int width, int height) {
-	BITMAPINFOHEADER bmi_h = {};
+	BITMAPINFOHEADER bmi_h = {0};
 	bmi_h.biSize = sizeof(BITMAPINFOHEADER);
 	bmi_h.biWidth = width;
 	bmi_h.biHeight = -height;
@@ -1566,13 +1574,39 @@ BITMAPINFO dgl_get_bitmap_info(int width, int height) {
 	bmi_h.biBitCount = 32;
 	bmi_h.biCompression = BI_RGB;
 	
-	BITMAPINFO bmi = {};
+	BITMAPINFO bmi = {0};
 	bmi.bmiHeader = bmi_h;
 
 	return bmi;
 }
 
+dgl_Dib_Buffer dgl_create_dib_buffer(int width, int height){
+	BITMAPINFOHEADER bmi_h = {};
+	bmi_h.biSize = sizeof(BITMAPINFOHEADER);
+	bmi_h.biWidth = width;
+	bmi_h.biHeight = -height;	// windows stores bitmaps from bottom to top and we don't want that, so we invert it
+	bmi_h.biPlanes = 1;
+	bmi_h.biBitCount = 32;
+	bmi_h.biCompression = BI_RGB;
+	
+	BITMAPINFO bmi = {};
+	bmi.bmiHeader = bmi_h;
+	
+	dgl_Dib_Buffer gb;
+	gb.bmi = bmi;
+	// We don't need first parameter if we use DIB_RGB_COLORS
+	// DIB is internal windows representation for Bitmap that is device independent (Device Independent Bitmap)
+	// WINDOWS CONVENTION FOR PIXEL CHANNELS ORDER FOR "DIB" IS BGR (0x00RRGGBB)
+	// This means that if we modify buffer with our library to RED color, it will be seen as BLUE in DIB format
+	gb.hbm = CreateDIBSection(NULL, &bmi, DIB_RGB_COLORS, (void**)&gb.data, (HANDLE)NULL, (DWORD)NULL);
+
+	return gb;
+}
+
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+HBITMAP hBitmap = NULL;
+dgl_Dib_Buffer _front_buffer = {0};
 
 void init();
 void start();
@@ -1582,8 +1616,8 @@ void end();
 void windows_init(){
 	init();
 
-	if(window.width == 0) window.width = DEFAULT_WINDOW_WIDTH;
-	if(window.height == 0) window.height = DEFAULT_WINDOW_HEIGHT;
+	if(window.width <= 0) window.width = DEFAULT_WINDOW_WIDTH;
+	if(window.height <= 0) window.height = DEFAULT_WINDOW_HEIGHT;
 		
 	window.canvas.pixels = calloc(window.width * window.height, sizeof(uint32_t));
 	window.canvas.width = window.width;
@@ -1604,7 +1638,7 @@ uint32_t *ppp;
 
 LARGE_INTEGER var_fps_ticks_start;
 LARGE_INTEGER var_fps_ticks_end;
-POINT cursorPos = {};
+POINT cursorPos = {0};
 void windows_update(HWND hwnd, float dt){
 	//QueryPerformanceCounter(&var_fps_ticks_start);
 
@@ -1615,7 +1649,7 @@ void windows_update(HWND hwnd, float dt){
 	
 	update(dt);
 
-	memcpy(ppp, window.canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
+	memcpy(_front_buffer.data, window.canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
 
 	//QueryPerformanceCounter(&var_fps_ticks_end);
 }
@@ -1626,34 +1660,37 @@ void windows_end(){
 
 // TODO: Window drawing area should be adjusted so that user defined width and height
 // don't include window borders.
+dgl_Bool running = true;
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow){
 	LARGE_INTEGER performance_frequency;
 	QueryPerformanceFrequency(&performance_frequency);
 
 	windows_init();
 
-	MSG msg;
-	HWND hwnd;
-	WNDCLASSW wc;
+	// TODO: Change these function calls to their extended equivalents.
+	
+	MSG msg = {0};
+	HWND hwnd = {0};
+	WNDCLASSW wc = {0};
 	
 	wc.style         = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
     wc.lpszClassName = L"Window";
     wc.hInstance     = hInstance;
-	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
     wc.lpszMenuName  = NULL;
     wc.lpfnWndProc   = WndProc;
 
 	RegisterClassW(&wc);
 
-	// TODO: Change to CreateWindowEx version
 	hwnd = CreateWindowW(wc.lpszClassName, L"Engine",
 						 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 						 100, 100, window.width, window.height, NULL, NULL, hInstance, NULL);
 
+	if(hwnd == 0) running = false;
+	
 	ShowWindow(hwnd, nCmdShow);
-
+	
 	LARGE_INTEGER ticks_start;
 	LARGE_INTEGER ticks_end;
 	
@@ -1666,34 +1703,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
 	time_slice = 1.0/fps;
 	time_slice -= 0.01*time_slice;	// Experimental adjustment
 
-	while(msg.message != WM_QUIT){
-		// PeekMessage will not block if there are no messages (GetMessage will)
-		if(PeekMessage(&msg, 0, 0, 0, PM_REMOVE)){
-			// Most messages are sent directly to window procedure
-			// Those that are not include: WM_PAINT, keyboard related messages, mouse related messages
-			// When key is pressed, it is sent through queue as a virtual key code
-			// The purpose of TranslateMessage is to take that code and generate corresponding message of type WM_CHAR
-			// This way, we can have WM_CHAR case in window procedure, and get its data from WPARAM and LPARAM
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		else{
-			// Accumulate time to roughly match expected frame duration for the given FPS
-			ticks_start = ticks_end;
-			QueryPerformanceCounter(&ticks_end);
-
-			time_acc += (float)(ticks_end.QuadPart - ticks_start.QuadPart)/(float)performance_frequency.QuadPart;
-			// Update things after accumulated time and prepare for next accumulation
-			if(time_acc > time_slice){
-				windows_update(hwnd, time_acc);
-				InvalidateRect(hwnd, NULL, FALSE);
-				
-				time_acc = 0;
-			}
-		}
-	}
-
-	/*
 	while(running) {
 		while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
@@ -1718,7 +1727,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
 			}
 		}
 	}
-	*/
 	
 	return (int)msg.wParam;
 }
@@ -1734,45 +1742,40 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 		{
 			windows_start();
 			
-			bmi = dgl_get_bitmap_info(window.canvas.width, window.canvas.height);
-			bitmapHandle = CreateDIBSection(NULL, &bmi, DIB_RGB_COLORS, &ppp, 0, 0);
-
 			memcpy(window.canvas.pixels, window.back_canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
-		
-			memcpy(ppp, window.canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
 
-			//srcHdc = CreateCompatibleDC(hdc);
+			_front_buffer = dgl_create_dib_buffer(window.canvas.width, window.canvas.height);
+		
+			memcpy(_front_buffer.data, window.canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
+			hBitmap = _front_buffer.hbm;
+
 		} break;
 	case WM_PAINT:
 		{
-			//GetClientRect(hwnd, &rect);
-			//window.width = rect.right - rect.left;
-			//window.height = rect.bottom - rect.top;
+			GetClientRect(hwnd, &rect);
+			window.width = rect.right - rect.left;
+			window.height = rect.bottom - rect.top;
 
 			hdc = BeginPaint(hwnd, &ps);
 
+#ifndef DGL_USE_AUTOSCALE
 			hdc_temp = CreateCompatibleDC(hdc);
-			SelectObject(hdc_temp, bitmapHandle);
+			SelectObject(hdc_temp, hBitmap);
 			BitBlt(hdc, 0, 0, window.canvas.width, window.canvas.height, hdc_temp, 0, 0, SRCCOPY);
 			DeleteDC(hdc_temp);
-
-
-			//memcpy(ppp, window.canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
-
-			//hdc = BeginPaint(hwnd, &ps);
-			//StretchDIBits(hdc,
-			//			  0, 0, window.width, window.height,
-			//			  0, 0, window.canvas.width, window.canvas.height,
-			//			  window.canvas.pixels, &bmi,
-			//			  DIB_RGB_COLORS, SRCCOPY);
-			//SelectObject(srcHdc, bitmapHandle);
-			//BitBlt(hdc, 0, 0, window.canvas.width, window.canvas.height, srcHdc, 0, 0, SRCCOPY);
+#else // TODO: Maybe write own scaler in the future, instead of using windows defined one.
+			StretchDIBits(hdc,
+			 			  0, 0, window.width, window.height,
+			 			  0, 0, window.canvas.width, window.canvas.height,
+			 			  window.canvas.pixels, &_front_buffer.bmi,
+			 			  DIB_RGB_COLORS, SRCCOPY);
+#endif
 				   
 			EndPaint(hwnd, &ps);		
 		} break;
 	case WM_DESTROY:
 		{
-			//windows_end();
+			windows_end();
 			PostQuitMessage(0);
 		} break;
     }
