@@ -38,9 +38,7 @@ With this kind of engine layout, shared state between four main functions will b
 
 ### Examples
 
-Examples are provided in examples folder and the code contained there is written as if it is meant to be run from precisely that folder (for example, when model is loaded from file, file path is relative to that directory).
-
-Examples show some usage cases, but do not cover all functionalities.
+Examples are provided in examples folder and the code contained there is written as if it is meant to be run from the folder where ```dgl.h``` is located. Examples show some usage cases, but do not cover all functionalities.
 
 ### Models
 

@@ -16,7 +16,7 @@ void init(){
 void start(){
 	dgl_clear(&window.back_canvas, DGL_BLACK);
 	
-	file = fopen("../dgl.h", "rb");
+	file = fopen("dgl.h", "rb");
 
 	// Cool idea by Chrisopher Domas to visually represent binary data.
 	// This is the simplest form where we take 2 adjacent bytes and see

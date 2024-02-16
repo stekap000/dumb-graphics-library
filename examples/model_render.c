@@ -34,7 +34,7 @@ void init(){
 void start(){
 	dgl_clear(&window.back_canvas, DGL_BLACK);
 
-	loaded_sm = dgl_load_simple_model("../models/hand.obj", true);
+	loaded_sm = dgl_load_simple_model("models/hand.obj", true);
 	loaded_sm->colors[0] = DGL_RGBA(0, 255, 0, 50);
 
 	dgl_scale_simple_model(loaded_sm, 100);
