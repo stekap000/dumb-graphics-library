@@ -38,11 +38,12 @@
 #include <errno.h>  // TODO: Remove in the future. We can do without this
 #include <math.h>
 
-// TODO: Add inclusion for C++
+// TODO: Maybe support explicit simd for some operations in the future.
+#ifdef DGL_USE_SIMD
+#include <immintrin.h>
+#endif
 
-typedef enum { false, true } dgl_Bool;
-typedef float dgl_Real; // This is because we can use it to easily change precision
-typedef int dgl_Errno;
+// TODO: Add inclusion for C++
 
 #define DGL_PI 3.14159265358
 
@@ -106,136 +107,42 @@ typedef int dgl_Errno;
 #define DGL_TRANSFORM_COORDINATES_X(x) ((x) + DGL_COORDINATE_CENTER_X)
 #define DGL_TRANSFORM_COORDINATES_Y(y, canvas_height) ((canvas_height)-(y) - DGL_COORDINATE_CENTER_Y)
 
+#define DGL_GET_PIXEL(canvas, x, y) (canvas).pixels[(y)*(canvas).stride + (x)]
+#define DGL_SET_PIXEL(canvas, x, y, v) (canvas).pixels[(y)*(canvas).stride + (x)] = (v)
+
+#define DGL_DEFAULT_FONT_WIDTH		6
+#define DGL_DEFAULT_FONT_HEIGHT		7
+
+#ifdef DGL_USE_SIMD
+typedef union { __m128 v; float s[4]; } dgl_M128;
+typedef union { __m128i v; int s[4]; } dgl_M128i;
+#endif
+
+typedef enum { false, true } dgl_Bool;
+typedef float dgl_Real; // This is because we can use it to easily change precision
+typedef int dgl_Errno;
+
+typedef dgl_Real dgl_Mat4[16];
+typedef dgl_Real dgl_Vec4[4];
+
 typedef struct {
 	dgl_Real *cells;
 	int height;
 	int width;
 } dgl_Mat;
 
-DGLAPI dgl_Mat dgl_mat_alloc(int height, int width){
-	dgl_Mat m = {};
-	m.cells = calloc(height*width, sizeof(dgl_Real));
-	m.height = height;
-	m.width = width;
-	return m;
-}
-
-DGLAPI void dgl_mat_free(dgl_Mat m){
-	free(m.cells);
-}
-
-DGLAPI void dgl_mat_scale(dgl_Mat m, dgl_Real s){
-	for(int i = 0; i < m.width*m.height; ++i)
-		m.cells[i] *= s;
-}
-
-DGLAPI void dgl_mat_add(dgl_Mat m1, dgl_Mat m2){
-	if(m1.height == m2.height && m1.width == m2.width)
-		for(int i = 0; i < m1.width*m1.height; ++i)
-			m1.cells[i] += m2.cells[i];
-}
-
-DGLAPI dgl_Mat dgl_mat_mul(dgl_Mat m1, dgl_Mat m2){
-	dgl_Mat m = {};
-	if(m1.width == m2.height){
-		m = dgl_mat_alloc(m1.height, m2.width);
-		
-		for(int i = 0; i < m1.height; ++i){
-			for(int j = 0; j < m2.width; ++j){
-				for(int k = 0; k < m1.width; ++k){
-					m.cells[i*m.width + j] += m1.cells[i*m1.width + k]*m2.cells[k*m2.width + j];
-				}					
-			}
-		} 
-	}
-
-	return m;
-}
-
-// TODO: Delete this in the future since it is just for testing
-DGLAPI void dgl_mat_print(dgl_Mat m){
-	for(int i = 0; i < m.height; ++i){
-		for(int j = 0; j < m.width; ++j){
-			printf("%f ", m.cells[i*m.width + j]);
-		}
-		printf("\n");
-	}
-}
-
-typedef dgl_Real dgl_Mat4[16];
-typedef dgl_Real dgl_Vec4[4];
-
-DGLAPI void dgl_mat4_add(dgl_Mat4 m1, dgl_Mat4 m2){
-#ifdef DGL_USE_SIMD
-
-#else
-	for(int i = 0; i < 16; ++i)
-		m1[i] += m2[i];
-#endif
-}
-
-DGLAPI void dgl_mat4_compose(dgl_Mat4 m1, dgl_Mat4 m2){
-	dgl_Mat4 temp;
-	memcpy(temp, m1, 64);
-	
-	for(int i = 0; i < 4; ++i){
-		for(int j = 0; j < 4; ++j){
-			for(int k = 0; k < 4; ++k){
-				m1[i*4 + j] += temp[i*4 + k] * m2[k*4 + j];
-			}					
-		}
-	}
-}
-// 
-// dgl_Vec dgl_mat4_apply(dgl_Mat4 m, dgl_Vec4 v){
-// 
-// }
-
-DGLAPI void dgl_init_proj_params(float fov_deg, float aspect_ratio, dgl_Real *l, dgl_Real *r, dgl_Real *t, dgl_Real *b, dgl_Real n, dgl_Real f){
-	(*t) = n * tanf(fov_deg * 0.5 * DGL_PI / 180);
-	(*b) = -(*t);
-	(*r) = aspect_ratio * (*t);
-	(*l) = -(*r);
-}
-
-// These params are initialized by specifying FOV and aspect-ratio
-DGLAPI dgl_Mat dgl_mat_get_proj(dgl_Real l, dgl_Real r, dgl_Real t, dgl_Real b, dgl_Real n, dgl_Real f){
-	dgl_Mat m = dgl_mat_alloc(4, 4);
-
-	// This is OpenGL projection matrix
-	m.cells[0]  = 2*n/(r-l);
-	m.cells[2]  = (r+l)/(r-l);
-	m.cells[5]  = 2*n/(t-b);
-	m.cells[6]  = (t+b)/(t-b);
-	m.cells[10] = -(f+n)/(f-n);
-	m.cells[11] = -2*f*n/(f-n);
-	m.cells[14] = -1;
-	
-	return m;
-}
-
-//typedef union {
-// 	struct { int x, y; };
-// 	int v[2];
-//} dgl_Point2D;
-// 
-//typedef union {
-// 	struct { dgl_Real x, y, z; };
-// 	dgl_Real v[3];
-//} dgl_Point3D;
-
-typedef struct { int x, y; } dgl_Point2D;
-typedef struct { dgl_Real x, y, z; } dgl_Point3D;
+typedef union {
+ 	struct { int x, y; };
+ 	int v[2];
+} dgl_Point2D;
+ 
+typedef union {
+ 	struct { dgl_Real x, y, z; };
+ 	dgl_Real v[3];
+} dgl_Point3D;
 
 typedef struct { dgl_Point2D v[3];	} dgl_Triangle2D;
 typedef struct { dgl_Point3D v[3];	} dgl_Triangle3D;
-
-DGLAPI inline void dgl_scale_point_2D(dgl_Point2D *p, int scale);
-DGLAPI inline void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
-DGLAPI inline void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t);
-DGLAPI inline void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t);
-DGLAPI void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle);
-DGLAPI void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
 
 // TODO: This model allows definition of colors for triangles (not interpolation based on vertices)
 // It is assumed that model consists of triangles
@@ -258,11 +165,65 @@ typedef struct{
 	int stride;
 } dgl_Canvas;
 
-#define DGL_GET_PIXEL(canvas, x, y) (canvas).pixels[(y)*(canvas).stride + (x)]
-#define DGL_SET_PIXEL(canvas, x, y, v) (canvas).pixels[(y)*(canvas).stride + (x)] = (v)
+// This is a general font type
+typedef struct{
+	size_t width, height;	// This must match with glyph mesh dimensions
+	char *glyphs;			// This allows us to iterate through 3D matrix character by character
+}dgl_Font;
 
-#define DGL_DEFAULT_FONT_WIDTH		6
-#define DGL_DEFAULT_FONT_HEIGHT		7
+DGLAPI dgl_Errno dgl_render_ppm(dgl_Canvas *canvas, char *filename);
+DGLAPI dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool has_quads);
+DGLAPI int dgl_save_simple_model(dgl_Simple_Model *sm, char *filename);
+DGLAPI void dgl_delete_simple_model(dgl_Simple_Model *sm);
+DGLAPI dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride);
+
+DGLAPI void dgl_clear(dgl_Canvas *canvas, uint32_t color);
+DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
+DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
+DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color);
+DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
+DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
+DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c1, uint32_t c2, uint32_t c3);
+DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, uint32_t color);
+DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color);
+DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color);
+DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
+DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
+
+DGLAPI void dgl_sort3(int *a, int *b, int *c);
+DGLAPI int dgl_min3(int a, int b, int c);
+DGLAPI int dgl_max3(int a, int b, int c);
+DGLAPI int dgl_clamp(int v, int left, int right);
+DGLAPI uint32_t dgl_blend(uint32_t f, uint32_t b);
+DGLAPI uint32_t dgl_bary_color(float s, float t, uint32_t c1, uint32_t c2, uint32_t c3);
+
+DGLAPI inline void dgl_scale_point_2D(dgl_Point2D *p, int scale);
+DGLAPI inline void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
+DGLAPI inline void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t);
+DGLAPI inline void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t);
+DGLAPI void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle);
+DGLAPI void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
+
+DGLAPI void dgl_draw_simple_model(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
+DGLAPI void dgl_draw_simple_model_mesh(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
+DGLAPI void dgl_scale_simple_model(dgl_Simple_Model *sm, dgl_Real scale);
+DGLAPI void dgl_translate_simple_model(dgl_Simple_Model *sm, dgl_Point3D translation);
+DGLAPI void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
+
+// TODO: Implement vectors
+// TODO: Implement matrix operations (also provide simd in the future)
+DGLAPI dgl_Mat dgl_mat_alloc(int height, int width);
+DGLAPI void dgl_mat_free(dgl_Mat m);
+DGLAPI void dgl_mat_scale(dgl_Mat m, dgl_Real s);
+DGLAPI void dgl_mat_add(dgl_Mat m1, dgl_Mat m2);
+DGLAPI dgl_Mat dgl_mat_mul(dgl_Mat m1, dgl_Mat m2);
+DGLAPI void dgl_mat_print(dgl_Mat m);
+DGLAPI void dgl_mat4_add(dgl_Mat4 m1, dgl_Mat4 m2);
+DGLAPI void dgl_mat4_compose(dgl_Mat4 m1, dgl_Mat4 m2);
+
+// TODO: Maybe do projection this way after implementing matrices, maybe do it dumber
+DGLAPI void dgl_init_proj_params(float fov_deg, float aspect_ratio, dgl_Real *l, dgl_Real *r, dgl_Real *t, dgl_Real *b, dgl_Real n, dgl_Real f);
+DGLAPI dgl_Mat dgl_mat_get_proj(dgl_Real l, dgl_Real r, dgl_Real t, dgl_Real b, dgl_Real n, dgl_Real f);
 
 char dgl_Default_Glyphs[128][DGL_DEFAULT_FONT_HEIGHT][DGL_DEFAULT_FONT_WIDTH] = {
 	[' '] = {
@@ -618,71 +579,16 @@ char dgl_Default_Glyphs[128][DGL_DEFAULT_FONT_HEIGHT][DGL_DEFAULT_FONT_WIDTH] = 
 	}
 };
 
-
-// This is a general font type
-typedef struct{
-	size_t width, height;	// This must match with glyph mesh dimensions
-	char *glyphs;			// This allows us to iterate through 3D matrix character by character
-}dgl_Font;
-
 // This is default font provided with library
 dgl_Font dgl_Default_Font = {
 	.width = DGL_DEFAULT_FONT_WIDTH,
 	.height = DGL_DEFAULT_FONT_HEIGHT,
-	.glyphs = &dgl_Default_Glyphs[0][0][0]	// We could just assign dgl_Default_Glyphs, but compiler gives warning
+	.glyphs = &dgl_Default_Glyphs[0][0][0]
 };
-
-DGLAPI dgl_Errno dgl_render_ppm(dgl_Canvas *canvas, char *filename);
-DGLAPI dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool has_quads);
-DGLAPI int dgl_save_simple_model(dgl_Simple_Model *sm, char *filename);
-DGLAPI void dgl_delete_simple_model(dgl_Simple_Model *sm);
-DGLAPI dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride);
-
-DGLAPI void dgl_clear(dgl_Canvas *canvas, uint32_t color);
-DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
-DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
-DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color);
-DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
-DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
-DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c1, uint32_t c2, uint32_t c3);
-DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, uint32_t color);
-DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color);
-DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color);
-DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
-DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
-
-DGLAPI void dgl_sort3(int *a, int *b, int *c);
-DGLAPI int dgl_min3(int a, int b, int c);
-DGLAPI int dgl_max3(int a, int b, int c);
-DGLAPI int dgl_clamp(int v, int left, int right);
-DGLAPI uint32_t dgl_blend(uint32_t f, uint32_t b);
-DGLAPI uint32_t dgl_bary_color(float s, float t, uint32_t c1, uint32_t c2, uint32_t c3);
-
-DGLAPI void dgl_scale_point_2D(dgl_Point2D *p, int scale);
-DGLAPI void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
-DGLAPI void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t);
-DGLAPI void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t);
-DGLAPI void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle);
-DGLAPI void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
-
-DGLAPI void dgl_draw_simple_model(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
-DGLAPI void dgl_draw_simple_model_mesh(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
-DGLAPI void dgl_scale_simple_model(dgl_Simple_Model *sm, dgl_Real scale);
-DGLAPI void dgl_translate_simple_model(dgl_Simple_Model *sm, dgl_Point3D translation);
-DGLAPI void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
 
 #endif // DGL_H
 
 #ifdef DGL_IMPLEMENTATION
-
-// TODO: We should use this to allow the choice of using SIMD
-// Of course, on top of this, whenever we are using some simd instruction set, we would need to check if it
-// is supported
-#ifdef DGL_USE_SIMD
-#include <immintrin.h>
-typedef union { __m128 v; float s[4]; } dgl_M128;
-typedef union { __m128i v; int s[4]; } dgl_M128i;
-#endif
 
 DGLAPI void dgl_scale_point_2D(dgl_Point2D *p, int scale){ p->x *= scale; p->y *= scale; }
 DGLAPI void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale){ p->x *= scale; p->y *= scale; p->z *= scale; }
@@ -1420,18 +1326,98 @@ DGLAPI void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_
 		dgl_rotate_point_3D(&(sm->vertices[i]), angle_x, angle_y, angle_z);
 }
 
-#ifdef DGL_USE_SIMD
-DGLAPI __m128i dgl_mm_mul_epi32(__m128i a, __m128i b){
-	__m128i a13    = _mm_shuffle_epi32(a, 0xF5);          // (-,a3,-,a1)
-	__m128i b13    = _mm_shuffle_epi32(b, 0xF5);          // (-,b3,-,b1)
-	__m128i prod02 = _mm_mul_epu32(a, b);                 // (-,a2*b2,-,a0*b0)
-	__m128i prod13 = _mm_mul_epu32(a13, b13);             // (-,a3*b3,-,a1*b1)
-	__m128i prod01 = _mm_unpacklo_epi32(prod02,prod13);   // (-,-,a1*b1,a0*b0) 
-	__m128i prod23 = _mm_unpackhi_epi32(prod02,prod13);   // (-,-,a3*b3,a2*b2) 
-	__m128i prod   = _mm_unpacklo_epi64(prod01,prod23);   // (ab3,ab2,ab1,ab0)
-	return prod;
+
+DGLAPI dgl_Mat dgl_mat_alloc(int height, int width){
+	dgl_Mat m = {};
+	m.cells = calloc(height*width, sizeof(dgl_Real));
+	m.height = height;
+	m.width = width;
+	return m;
 }
-#endif
+
+DGLAPI void dgl_mat_free(dgl_Mat m){
+	free(m.cells);
+}
+
+DGLAPI void dgl_mat_scale(dgl_Mat m, dgl_Real s){
+	for(int i = 0; i < m.width*m.height; ++i)
+		m.cells[i] *= s;
+}
+
+DGLAPI void dgl_mat_add(dgl_Mat m1, dgl_Mat m2){
+	if(m1.height == m2.height && m1.width == m2.width)
+		for(int i = 0; i < m1.width*m1.height; ++i)
+			m1.cells[i] += m2.cells[i];
+}
+
+DGLAPI dgl_Mat dgl_mat_mul(dgl_Mat m1, dgl_Mat m2){
+	dgl_Mat m = {};
+	if(m1.width == m2.height){
+		m = dgl_mat_alloc(m1.height, m2.width);
+		
+		for(int i = 0; i < m1.height; ++i){
+			for(int j = 0; j < m2.width; ++j){
+				for(int k = 0; k < m1.width; ++k){
+					m.cells[i*m.width + j] += m1.cells[i*m1.width + k]*m2.cells[k*m2.width + j];
+				}					
+			}
+		} 
+	}
+
+	return m;
+}
+
+// TODO: Delete this in the future since it is just for testing
+DGLAPI void dgl_mat_print(dgl_Mat m){
+	for(int i = 0; i < m.height; ++i){
+		for(int j = 0; j < m.width; ++j){
+			printf("%f ", m.cells[i*m.width + j]);
+		}
+		printf("\n");
+	}
+}
+
+DGLAPI void dgl_mat4_add(dgl_Mat4 m1, dgl_Mat4 m2){}
+
+DGLAPI void dgl_mat4_compose(dgl_Mat4 m1, dgl_Mat4 m2){
+	dgl_Mat4 temp;
+	memcpy(temp, m1, 64);
+	
+	for(int i = 0; i < 4; ++i){
+		for(int j = 0; j < 4; ++j){
+			for(int k = 0; k < 4; ++k){
+				m1[i*4 + j] += temp[i*4 + k] * m2[k*4 + j];
+			}					
+		}
+	}
+}
+// 
+// dgl_Vec dgl_mat4_apply(dgl_Mat4 m, dgl_Vec4 v){
+// 
+// }
+
+DGLAPI void dgl_init_proj_params(float fov_deg, float aspect_ratio, dgl_Real *l, dgl_Real *r, dgl_Real *t, dgl_Real *b, dgl_Real n, dgl_Real f){
+	(*t) = n * tanf(fov_deg * 0.5 * DGL_PI / 180);
+	(*b) = -(*t);
+	(*r) = aspect_ratio * (*t);
+	(*l) = -(*r);
+}
+
+// These params are initialized by specifying FOV and aspect-ratio
+DGLAPI dgl_Mat dgl_mat_get_proj(dgl_Real l, dgl_Real r, dgl_Real t, dgl_Real b, dgl_Real n, dgl_Real f){
+	dgl_Mat m = dgl_mat_alloc(4, 4);
+
+	// This is OpenGL projection matrix
+	m.cells[0]  = 2*n/(r-l);
+	m.cells[2]  = (r+l)/(r-l);
+	m.cells[5]  = 2*n/(t-b);
+	m.cells[6]  = (t+b)/(t-b);
+	m.cells[10] = -(f+n)/(f-n);
+	m.cells[11] = -2*f*n/(f-n);
+	m.cells[14] = -1;
+	
+	return m;
+}
 
 DGLAPI uint32_t dgl_blend(uint32_t f, uint32_t b){
 	// These were used in dgl_Real arithmetic
