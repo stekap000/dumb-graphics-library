@@ -41,3 +41,7 @@ With this kind of engine layout, shared state between four main functions will b
 Examples are provided in examples folder and the code contained there is written as if it is meant to be run from precisely that folder (for example, when model is loaded from file, file path is relative to that directory).
 
 Examples show some usage cases, but do not cover all functionalities.
+
+### Models
+
+Models are not mine. I just found them as free models online. They are there just for testing and to showcase some functionalities.
