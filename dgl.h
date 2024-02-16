@@ -1673,43 +1673,40 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
 						 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 						 100, 100, window.width, window.height, NULL, NULL, hInstance, NULL);
 
-	if(hwnd == 0) running = false;
+	if(hwnd != 0){
+		ShowWindow(hwnd, nCmdShow);
 	
-	ShowWindow(hwnd, nCmdShow);
+		LARGE_INTEGER ticks_start;
+		LARGE_INTEGER ticks_end;
 	
-	LARGE_INTEGER ticks_start;
-	LARGE_INTEGER ticks_end;
-	
-	QueryPerformanceCounter(&ticks_start);
-	QueryPerformanceCounter(&ticks_end);
+		QueryPerformanceCounter(&ticks_start);
+		QueryPerformanceCounter(&ticks_end);
 
-	float time_acc = 0;
-	float time_slice = 0;
+		float time_acc = 0;
+		float time_slice = 0;
 
-	time_slice = 1.0/fps;
-	time_slice -= 0.01*time_slice;	// Experimental adjustment
+		time_slice = 1.0/fps;
+		time_slice -= 0.01*time_slice;	// Experimental adjustment
 
-	while(running) {
-		while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+		while(running) {
+			while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 
-		if(msg.message == WM_QUIT) {
-			running = false;
-		}
-		else {
-			ticks_start = ticks_end;
-			QueryPerformanceCounter(&ticks_end);
+			if(msg.message != WM_QUIT) {
+				ticks_start = ticks_end;
+				QueryPerformanceCounter(&ticks_end);
 
-			time_acc += (float)(ticks_end.QuadPart - ticks_start.QuadPart)/(float)performance_frequency.QuadPart;
+				time_acc += (float)(ticks_end.QuadPart - ticks_start.QuadPart)/(float)performance_frequency.QuadPart;
 			
-			// Update things after accumulated time and prepare for next accumulation
-			if(time_acc > time_slice){
-				windows_update(hwnd, time_acc);
-				InvalidateRect(hwnd, NULL, FALSE);
+				// Update things after accumulated time and prepare for next accumulation
+				if(time_acc > time_slice){
+					windows_update(hwnd, time_acc);
+					InvalidateRect(hwnd, NULL, FALSE);
 				
-				time_acc = 0;
+					time_acc = 0;
+				}
 			}
 		}
 	}
@@ -1759,9 +1756,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 				   
 			EndPaint(hwnd, &ps);		
 		} break;
+	case WM_CLOSE:
+		{
+			running = false;
+		} break;
 	case WM_DESTROY:
 		{
 			windows_end();
+			running = false;
 			PostQuitMessage(0);
 		} break;
     }
