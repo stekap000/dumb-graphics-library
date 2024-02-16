@@ -1328,7 +1328,7 @@ DGLAPI void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_
 
 
 DGLAPI dgl_Mat dgl_mat_alloc(int height, int width){
-	dgl_Mat m = {};
+	dgl_Mat m = {0};
 	m.cells = calloc(height*width, sizeof(dgl_Real));
 	m.height = height;
 	m.width = width;
@@ -1351,7 +1351,7 @@ DGLAPI void dgl_mat_add(dgl_Mat m1, dgl_Mat m2){
 }
 
 DGLAPI dgl_Mat dgl_mat_mul(dgl_Mat m1, dgl_Mat m2){
-	dgl_Mat m = {};
+	dgl_Mat m = {0};
 	if(m1.width == m2.height){
 		m = dgl_mat_alloc(m1.height, m2.width);
 		
@@ -1567,7 +1567,7 @@ BITMAPINFO dgl_get_bitmap_info(int width, int height) {
 }
 
 dgl_Dib_Buffer dgl_create_dib_buffer(int width, int height){
-	BITMAPINFOHEADER bmi_h = {};
+	BITMAPINFOHEADER bmi_h = {0};
 	bmi_h.biSize = sizeof(BITMAPINFOHEADER);
 	bmi_h.biWidth = width;
 	bmi_h.biHeight = -height;	// windows stores bitmaps from bottom to top and we don't want that, so we invert it
@@ -1575,7 +1575,7 @@ dgl_Dib_Buffer dgl_create_dib_buffer(int width, int height){
 	bmi_h.biBitCount = 32;
 	bmi_h.biCompression = BI_RGB;
 	
-	BITMAPINFO bmi = {};
+	BITMAPINFO bmi = {0};
 	bmi.bmiHeader = bmi_h;
 	
 	dgl_Dib_Buffer gb;

@@ -6,7 +6,7 @@
 
 FILE *file;
 #define READ_WINDOW 4096
-unsigned char buffer[READ_WINDOW] = { 0 };
+unsigned char buffer[READ_WINDOW] = {0};
 int succ_read = READ_WINDOW;
 
 void init(){

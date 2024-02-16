@@ -13,7 +13,7 @@
 #define grid_height height/cell_height
 #define grid_width width/cell_width
 
-int grid[grid_height][grid_width] = {};
+int grid[grid_height][grid_width] = {0};
 
 #define white_saturation 0.6
 
@@ -69,7 +69,7 @@ int next_state(int grid[grid_height][grid_width], int x, int y)
 
 void update_grid(int grid[grid_height][grid_width])
 {
-	int temp[grid_height][grid_width] = {};
+	int temp[grid_height][grid_width] = {0};
 
 	loop(y, grid_height)
 	{
