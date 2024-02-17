@@ -1620,8 +1620,6 @@ void windows_start(){
 	start();
 }
 
-uint32_t *ppp;
-
 LARGE_INTEGER var_fps_ticks_start;
 LARGE_INTEGER var_fps_ticks_end;
 POINT cursorPos = {0};
@@ -1644,8 +1642,6 @@ void windows_end(){
 	end();
 }
 
-// TODO: Window drawing area should be adjusted so that user defined width and height
-// don't include window borders.
 dgl_Bool running = true;
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow){
 	LARGE_INTEGER performance_frequency;
@@ -1653,25 +1649,35 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
 
 	windows_init();
 
-	// TODO: Change these function calls to their extended equivalents.
-	
 	MSG msg = {0};
 	HWND hwnd = {0};
-	WNDCLASSW wc = {0};
+	WNDCLASSEX wc = {0};
 	
-	wc.style         = CS_HREDRAW | CS_VREDRAW;
-    wc.cbClsExtra    = 0;
-    wc.cbWndExtra    = 0;
-    wc.lpszClassName = L"Window";
-    wc.hInstance     = hInstance;
-    wc.lpszMenuName  = NULL;
-    wc.lpfnWndProc   = WndProc;
+	wc.cbSize			= sizeof(WNDCLASSEX);
+	wc.style			= CS_HREDRAW | CS_VREDRAW;
+	wc.cbClsExtra		= 0;
+    wc.cbWndExtra		= 0;
+    wc.lpszClassName	= L"Window";
+    wc.hInstance		= hInstance;
+    wc.lpszMenuName		= NULL;
+	wc.hbrBackground    = CreateSolidBrush(COLOR_WINDOW);
+    wc.lpfnWndProc		= WndProc;
 
-	RegisterClassW(&wc);
+	RegisterClassEx(&wc);
 
-	hwnd = CreateWindowW(wc.lpszClassName, L"Engine",
-						 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-						 100, 100, window.width, window.height, NULL, NULL, hInstance, NULL);
+	RECT rect = {0};
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = window.width;
+	rect.bottom = window.height;
+	AdjustWindowRectEx(&rect, WS_TILEDWINDOW, 0, WS_EX_OVERLAPPEDWINDOW);
+
+	hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
+						  wc.lpszClassName,
+						  L"Engine",
+						  WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+						  100, 100, rect.right - rect.left, rect.bottom - rect.top,
+						  0, 0, hInstance, 0);
 
 	if(hwnd != 0){
 		ShowWindow(hwnd, nCmdShow);
