@@ -32,7 +32,7 @@ Secondly, you need to provide implementation for four functions in the same file
 * **update(float dt)** - Called every iteration of the game loop. Main logic goes here.
 * **end()** - Called once before application closes. Use this to save some information to file or wherever. You can also use it to release used resources, but there is no need for this, since the OS will do it for you anyway, and you would just be wasting CPU time with that.
 
-When using engine, you have access to ```window``` global variable that has ```canvas``` and ```back_canvas``` to draw to with library functions. ```back_canvas``` content is always layered first (like a background). ```canvas``` content is layered over ```back_canvas``` content. If the background does not change in your case, then it is enough to set ```back_canvas``` once in **start()** function.
+When using engine, you have access to ```window``` global variable that has ```canvas``` and ```back_canvas``` to draw to with library functions. ```back_canvas``` content is always layered first (like a background). ```canvas``` content is layered over ```back_canvas``` content. If the background does not change in your case, then it is enough to set ```back_canvas``` once in **start()** function. Additionally, you have access to ```cursor_pos```, which contains x and y coordinates of the cursor.
 
 With this kind of engine layout, shared state between four main functions will be fully global. With this in mind, this simple visual engine is not serious, but it is good for quick prototypes.
 
