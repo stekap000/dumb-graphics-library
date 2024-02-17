@@ -20,6 +20,10 @@ If you are targeting specific system, then specify subsystem depending on compil
 
 If you are using provided prototype engine then you need to link additional libraries. At this point, simple engine exists only for Windows, so you will need to link **gdi32.lib**, **user32.lib** and **kernel32.lib** if it is not linked automatically.
 
+Compilation examples (add more flags or adjust existing if needed):\
+```gcc -O2 -Wl,-subsystem,windows myfile.c -lgdi32 -luser32 -lkernel32```\
+```cl -O2 myfile.c gdi32.lib user32.lib kernel32.lib```
+
 ### Simple prototype engine usage
 
 Use this engine to quickly view results of your experimentation.
