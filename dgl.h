@@ -253,6 +253,16 @@ char dgl_Default_Glyphs[128][DGL_DEFAULT_FONT_HEIGHT][DGL_DEFAULT_FONT_WIDTH] = 
 		{0, 1, 1, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0}
 	},
+	['-'] = {
+		{0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0},
+		{0, 1, 1, 1, 1, 0},
+		{0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}
+	
+	},
 	['0'] = {
 		{0, 1, 1, 1, 0, 0},
 		{1, 0, 0, 0, 1, 0},
@@ -580,7 +590,7 @@ char dgl_Default_Glyphs[128][DGL_DEFAULT_FONT_HEIGHT][DGL_DEFAULT_FONT_WIDTH] = 
 };
 
 // This is default font provided with library
-dgl_Font dgl_Default_Font = {
+dgl_Font dgl_default_font = {
 	.width = DGL_DEFAULT_FONT_WIDTH,
 	.height = DGL_DEFAULT_FONT_HEIGHT,
 	.glyphs = &dgl_Default_Glyphs[0][0][0]
@@ -1505,10 +1515,6 @@ DGLAPI inline uint32_t DGL_RGBA_TO_BGRA(uint32_t v){
 	return v;
 }
 
-// TODO: Add some basic matrix support with SIMD
-// TODO: Add ability to triangulate and render surfaces
-// TODO: Create UI elements like buttons
-
 #endif // DGL_IMPLEMENTATION
 
 #ifdef DGL_USE_ENGINE
@@ -1525,6 +1531,13 @@ typedef struct {
 
 dgl_Window window = {0};
 unsigned int fps = 60;
+dgl_Point2D cursor_pos = {0};
+dgl_Bool running = true;
+
+void init();
+void start();
+void update(float dt);
+void end();
 
 void init_window_params(int width, int height){
 	window.width = width;
@@ -1535,23 +1548,23 @@ void init_fps(unsigned int v){
 	fps = v;
 }
 
-#ifdef DGL_TARGET_WINDOWS
-#include <windows.h>
-#include <windowsx.h>
-
 void write_debug_string(char *str){
 	FILE *dbf = fopen("debug.txt", "a");
 	fprintf(dbf, "%s\n", str);
 	fclose(dbf);
 }
 
+#ifdef DGL_TARGET_WINDOWS
+#include <windows.h>
+#include <windowsx.h>
+
 typedef struct{
 	HBITMAP hbm;
 	uint32_t* data;
 	BITMAPINFO bmi;
-}dgl_Dib_Buffer;
+} _Dib_Buffer;
 
-BITMAPINFO dgl_get_bitmap_info(int width, int height) {
+BITMAPINFO _get_bitmap_info(int width, int height) {
 	BITMAPINFOHEADER bmi_h = {0};
 	bmi_h.biSize = sizeof(BITMAPINFOHEADER);
 	bmi_h.biWidth = width;
@@ -1566,40 +1579,18 @@ BITMAPINFO dgl_get_bitmap_info(int width, int height) {
 	return bmi;
 }
 
-dgl_Dib_Buffer dgl_create_dib_buffer(int width, int height){
-	BITMAPINFOHEADER bmi_h = {0};
-	bmi_h.biSize = sizeof(BITMAPINFOHEADER);
-	bmi_h.biWidth = width;
-	bmi_h.biHeight = -height;	// windows stores bitmaps from bottom to top and we don't want that, so we invert it
-	bmi_h.biPlanes = 1;
-	bmi_h.biBitCount = 32;
-	bmi_h.biCompression = BI_RGB;
-	
-	BITMAPINFO bmi = {0};
-	bmi.bmiHeader = bmi_h;
-	
-	dgl_Dib_Buffer gb;
+_Dib_Buffer _create_dib_buffer(int width, int height){
+	BITMAPINFO bmi = _get_bitmap_info(width, height);
+	_Dib_Buffer gb;
 	gb.bmi = bmi;
-	// We don't need first parameter if we use DIB_RGB_COLORS
-	// DIB is internal windows representation for Bitmap that is device independent (Device Independent Bitmap)
-	// WINDOWS CONVENTION FOR PIXEL CHANNELS ORDER FOR "DIB" IS BGR (0x00RRGGBB)
-	// This means that if we modify buffer with our library to RED color, it will be seen as BLUE in DIB format
 	gb.hbm = CreateDIBSection(NULL, &bmi, DIB_RGB_COLORS, (void**)&gb.data, (HANDLE)NULL, (DWORD)NULL);
-
 	return gb;
 }
 
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+HBITMAP _bitmap_handle = NULL;
+_Dib_Buffer _front_buffer = {0};
 
-HBITMAP hBitmap = NULL;
-dgl_Dib_Buffer _front_buffer = {0};
-
-void init();
-void start();
-void update(float dt);
-void end();
-
-void windows_init(){
+void _windows_init(){
 	init();
 
 	if(window.width <= 0) window.width = DEFAULT_WINDOW_WIDTH;
@@ -1616,38 +1607,44 @@ void windows_init(){
 	window.back_canvas.stride = window.width;
 }
 
-void windows_start(){
+void _windows_start(){
 	start();
 }
 
-LARGE_INTEGER var_fps_ticks_start;
-LARGE_INTEGER var_fps_ticks_end;
-POINT cursorPos = {0};
-void windows_update(HWND hwnd, float dt){
-	//QueryPerformanceCounter(&var_fps_ticks_start);
+int _cursor_correction_x = 0;
+int _cursor_correction_y = 0;
+void _windows_update(HWND window_handle, float dt){
+	GetCursorPos((POINT *)&cursor_pos);
+	ScreenToClient(window_handle, (POINT *)&cursor_pos);
 
-	//GetCursorPos(&cursorPos);
-	//ScreenToClient(hwnd, &cursorPos);
+#ifndef DGL_USE_AUTOSCALE
+	cursor_pos.x = DGL_TRANSFORM_COORDINATES_X(cursor_pos.x);
+	cursor_pos.y = DGL_TRANSFORM_COORDINATES_Y(cursor_pos.y, window.canvas.height);
+#else
+	// Allow small error in order to avoid float arithmetic.
+	_cursor_correction_x = (cursor_pos.x * window.canvas.width)/window.width;
+	_cursor_correction_y = (cursor_pos.y * window.canvas.height)/window.height;
+	cursor_pos.x = DGL_TRANSFORM_COORDINATES_X(_cursor_correction_x);
+	cursor_pos.y = DGL_TRANSFORM_COORDINATES_Y(_cursor_correction_y, window.canvas.height);
+#endif
 
 	memcpy(window.canvas.pixels, window.back_canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
-	
+
 	update(dt);
 
 	memcpy(_front_buffer.data, window.canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
-
-	//QueryPerformanceCounter(&var_fps_ticks_end);
 }
 
-void windows_end(){
+void _windows_end(){
 	end();
 }
 
-dgl_Bool running = true;
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow){
+LRESULT CALLBACK _window_procedure(HWND, UINT, WPARAM, LPARAM);
+int APIENTRY WinMain(HINSTANCE instance_handle, HINSTANCE prev_instance_handle, LPSTR cmd_line, int cmd_show){
 	LARGE_INTEGER performance_frequency;
 	QueryPerformanceFrequency(&performance_frequency);
 
-	windows_init();
+	_windows_init();
 
 	MSG msg = {0};
 	HWND hwnd = {0};
@@ -1658,10 +1655,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
 	wc.cbClsExtra		= 0;
     wc.cbWndExtra		= 0;
     wc.lpszClassName	= L"Window";
-    wc.hInstance		= hInstance;
+    wc.hInstance		= instance_handle;
     wc.lpszMenuName		= NULL;
 	wc.hbrBackground    = CreateSolidBrush(COLOR_WINDOW);
-    wc.lpfnWndProc		= WndProc;
+    wc.lpfnWndProc		= _window_procedure;
 
 	RegisterClassEx(&wc);
 
@@ -1676,11 +1673,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
 						  wc.lpszClassName,
 						  L"Engine",
 						  WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-						  100, 100, rect.right - rect.left, rect.bottom - rect.top,
-						  0, 0, hInstance, 0);
+						  100, 100,
+						  rect.right - rect.left, rect.bottom - rect.top,
+						  0, 0, instance_handle, 0);
 
 	if(hwnd != 0){
-		ShowWindow(hwnd, nCmdShow);
+		ShowWindow(hwnd, cmd_show);
 	
 		LARGE_INTEGER ticks_start;
 		LARGE_INTEGER ticks_end;
@@ -1706,9 +1704,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
 
 				time_acc += (float)(ticks_end.QuadPart - ticks_start.QuadPart)/(float)performance_frequency.QuadPart;
 			
-				// Update things after accumulated time and prepare for next accumulation
+				// Update things after accumulated time
 				if(time_acc > time_slice){
-					windows_update(hwnd, time_acc);
+					_windows_update(hwnd, time_acc);
 					InvalidateRect(hwnd, NULL, FALSE);
 				
 					time_acc = 0;
@@ -1720,47 +1718,41 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLin
 	return (int)msg.wParam;
 }
 
-PAINTSTRUCT	 ps;
-HDC			 hdc, hdc_temp;
-BITMAPINFO   bmi;
-RECT         rect;
-HBITMAP bitmapHandle;
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
+PAINTSTRUCT	 _ps;
+HDC			 _hdc, _hdc_temp;
+RECT         _rect;
+LRESULT CALLBACK _window_procedure(HWND window_handle, UINT msg, WPARAM w_param, LPARAM l_param){
     switch(msg) {
 	case WM_CREATE:
 		{
-			windows_start();
+			_windows_start();
 			
-			memcpy(window.canvas.pixels, window.back_canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
-
-			_front_buffer = dgl_create_dib_buffer(window.canvas.width, window.canvas.height);
-		
-			memcpy(_front_buffer.data, window.canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
-			hBitmap = _front_buffer.hbm;
+			_front_buffer = _create_dib_buffer(window.canvas.width, window.canvas.height);
+			_bitmap_handle = _front_buffer.hbm;
 
 		} break;
 	case WM_PAINT:
 		{
-			GetClientRect(hwnd, &rect);
-			window.width = rect.right - rect.left;
-			window.height = rect.bottom - rect.top;
+			GetClientRect(window_handle, &_rect);
+			window.width = _rect.right - _rect.left;
+			window.height = _rect.bottom - _rect.top;
 
-			hdc = BeginPaint(hwnd, &ps);
+			_hdc = BeginPaint(window_handle, &_ps);
 
 #ifndef DGL_USE_AUTOSCALE
-			hdc_temp = CreateCompatibleDC(hdc);
-			SelectObject(hdc_temp, hBitmap);
-			BitBlt(hdc, 0, 0, window.canvas.width, window.canvas.height, hdc_temp, 0, 0, SRCCOPY);
-			DeleteDC(hdc_temp);
+			_hdc_temp = CreateCompatibleDC(_hdc);
+			SelectObject(_hdc_temp, _bitmap_handle);
+			BitBlt(_hdc, 0, 0, window.canvas.width, window.canvas.height, _hdc_temp, 0, 0, SRCCOPY);
+			DeleteDC(_hdc_temp);
 #else // TODO: Maybe write own scaler in the future, instead of using windows defined one.
-			StretchDIBits(hdc,
+			StretchDIBits(_hdc,
 			 			  0, 0, window.width, window.height,
 			 			  0, 0, window.canvas.width, window.canvas.height,
 			 			  window.canvas.pixels, &_front_buffer.bmi,
 			 			  DIB_RGB_COLORS, SRCCOPY);
 #endif
 				   
-			EndPaint(hwnd, &ps);		
+			EndPaint(window_handle, &_ps);		
 		} break;
 	case WM_CLOSE:
 		{
@@ -1768,13 +1760,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 		} break;
 	case WM_DESTROY:
 		{
-			windows_end();
+			_windows_end();
 			running = false;
 			PostQuitMessage(0);
 		} break;
     }
 
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProc(window_handle, msg, w_param, l_param);
 }
 
 #endif // DGL_USE_ENGINE::DGL_TARGET_WINDOWS
