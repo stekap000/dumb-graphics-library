@@ -135,12 +135,12 @@ typedef union {
  	struct { int x, y; };
  	int v[2];
 } dgl_Point2D;
- 
+
 typedef union {
  	struct { dgl_Real x, y, z; };
  	dgl_Real v[3];
-} dgl_Point3D;
-
+} dgl_V3, dgl_Point3D;
+ 
 typedef struct { dgl_Point2D v[3];	} dgl_Triangle2D;
 typedef struct { dgl_Point3D v[3];	} dgl_Triangle3D;
 
@@ -189,6 +189,14 @@ DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, ui
 DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color);
 DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
 DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
+
+DGLAPI inline dgl_V3 dgl_v3_add(dgl_V3 v1, dgl_V3 v2);
+DGLAPI inline dgl_V3 dgl_v3_sub(dgl_V3 v1, dgl_V3 v2);
+DGLAPI inline dgl_V3 dgl_v3_scale(dgl_V3 v, dgl_Real s);
+DGLAPI inline dgl_Real dgl_v3_dot(dgl_V3 v1, dgl_V3 v2);
+DGLAPI inline dgl_Real dgl_v3_lensq(dgl_V3 v);
+DGLAPI inline dgl_Real dgl_v3_len(dgl_V3 v);
+DGLAPI inline dgl_V3 dgl_v3_unit(dgl_V3 v);
 
 DGLAPI void dgl_sort3(int *a, int *b, int *c);
 DGLAPI int dgl_min3(int a, int b, int c);
@@ -1436,7 +1444,7 @@ DGLAPI uint32_t dgl_blend(uint32_t f, uint32_t b){
 	// uint32_t green 	= (uint32_t)((a1*g1 + g2*a2*(1-a1))*255);
 	// uint32_t blue 	= (uint32_t)((a1*b1 + b2*a2*(1-a1))*255);
 
-	// ONLY WITH INTEGER ARITHMETIC
+	// Conversion to integer arithmetic below
 	uint8_t a1 = ((f >> 24) & 0xFF);
 	uint8_t a2 = ((b >> 24) & 0xFF);
 		
@@ -1463,6 +1471,46 @@ DGLAPI uint32_t dgl_blend(uint32_t f, uint32_t b){
 	uint8_t alpha = (255*a1    + (255-a1)*a2   ) >> 8;
 	  	
 	return (alpha << 24) | (blue << 16) | (green << 8) | red;
+}
+
+DGLAPI inline dgl_V3 dgl_v3_add(dgl_V3 v1, dgl_V3 v2){
+	return (dgl_V3){
+		.x = v1.x + v2.x,
+		.y = v1.y + v2.y,
+		.z = v1.z + v2.z
+	};
+}
+
+DGLAPI inline dgl_V3 dgl_v3_sub(dgl_V3 v1, dgl_V3 v2){
+	return (dgl_V3){
+		.x = v1.x - v2.x,
+		.y = v1.y - v2.y,
+		.z = v1.z - v2.z
+	};
+}
+
+DGLAPI inline dgl_V3 dgl_v3_scale(dgl_V3 v, dgl_Real s){
+	return (dgl_V3){
+		.x = s * v.x,
+		.y = s * v.y,
+		.z = s * v.z
+	};
+}
+
+DGLAPI inline dgl_Real dgl_v3_dot(dgl_V3 v1, dgl_V3 v2){
+	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+DGLAPI inline dgl_Real dgl_v3_lensq(dgl_V3 v){
+	return dgl_v3_dot(v, v);
+}
+
+DGLAPI inline dgl_Real dgl_v3_len(dgl_V3 v){
+	return sqrt(dgl_v3_lensq(v));
+}
+
+DGLAPI inline dgl_V3 dgl_v3_unit(dgl_V3 v){
+	return dgl_v3_scale(v, 1.0/dgl_v3_len(v));
 }
 
 DGLAPI void dgl_sort3(int *a, int *b, int *c){
@@ -1556,7 +1604,6 @@ void write_debug_string(char *str){
 
 #ifdef DGL_TARGET_WINDOWS
 #include <windows.h>
-#include <windowsx.h>
 
 typedef struct{
 	HBITMAP hbm;
@@ -1617,6 +1664,7 @@ void _windows_update(HWND window_handle, float dt){
 	GetCursorPos((POINT *)&cursor_pos);
 	ScreenToClient(window_handle, (POINT *)&cursor_pos);
 
+	
 #ifndef DGL_USE_AUTOSCALE
 	cursor_pos.x = DGL_TRANSFORM_COORDINATES_X(cursor_pos.x);
 	cursor_pos.y = DGL_TRANSFORM_COORDINATES_Y(cursor_pos.y, window.canvas.height);
