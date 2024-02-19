@@ -171,10 +171,10 @@ typedef struct{
 	char *glyphs;			// This allows us to iterate through 3D matrix character by character
 }dgl_Font;
 
-DGLAPI dgl_Errno dgl_render_ppm(dgl_Canvas *canvas, char *filename);
+DGLAPI dgl_Errno         dgl_render_ppm(dgl_Canvas *canvas, char *filename);
 DGLAPI dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool has_quads);
-DGLAPI int dgl_save_simple_model(dgl_Simple_Model *sm, char *filename);
-DGLAPI void dgl_delete_simple_model(dgl_Simple_Model *sm);
+DGLAPI int               dgl_save_simple_model(dgl_Simple_Model *sm, char *filename);
+DGLAPI void              dgl_delete_simple_model(dgl_Simple_Model *sm);
 DGLAPI dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride);
 
 DGLAPI void dgl_clear(dgl_Canvas *canvas, uint32_t color);
@@ -190,27 +190,32 @@ DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, 
 DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
 DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
 
-DGLAPI inline dgl_V3 dgl_v3_add(dgl_V3 v1, dgl_V3 v2);
-DGLAPI inline dgl_V3 dgl_v3_sub(dgl_V3 v1, dgl_V3 v2);
-DGLAPI inline dgl_V3 dgl_v3_scale(dgl_V3 v, dgl_Real s);
-DGLAPI inline dgl_Real dgl_v3_dot(dgl_V3 v1, dgl_V3 v2);
-DGLAPI inline dgl_Real dgl_v3_lensq(dgl_V3 v);
-DGLAPI inline dgl_Real dgl_v3_len(dgl_V3 v);
-DGLAPI inline dgl_V3 dgl_v3_unit(dgl_V3 v);
+DGLAPI inline dgl_V3	dgl_v3_add(dgl_V3 v1, dgl_V3 v2);
+DGLAPI inline dgl_V3	dgl_v3_sub(dgl_V3 v1, dgl_V3 v2);
+DGLAPI inline dgl_V3	dgl_v3_scale(dgl_V3 v, dgl_Real s);
+DGLAPI inline dgl_Real	dgl_v3_dot(dgl_V3 v1, dgl_V3 v2);
+DGLAPI inline dgl_Real	dgl_v3_lensq(dgl_V3 v);
+DGLAPI inline dgl_Real	dgl_v3_len(dgl_V3 v);
+DGLAPI inline dgl_V3	dgl_v3_unit(dgl_V3 v);
 
-DGLAPI void dgl_sort3(int *a, int *b, int *c);
-DGLAPI int dgl_min3(int a, int b, int c);
-DGLAPI int dgl_max3(int a, int b, int c);
-DGLAPI int dgl_clamp(int v, int left, int right);
-DGLAPI uint32_t dgl_blend(uint32_t f, uint32_t b);
-DGLAPI uint32_t dgl_bary_color(float s, float t, uint32_t c1, uint32_t c2, uint32_t c3);
+DGLAPI inline void		dgl_v3_add_mut(dgl_V3 *v1, dgl_V3 v2);
+DGLAPI inline void		dgl_v3_sub_mut(dgl_V3 *v1, dgl_V3 v2);
+DGLAPI inline void		dgl_v3_scale_mut(dgl_V3 *v, dgl_Real s);
+DGLAPI inline void		dgl_v3_unit_mut(dgl_V3 *v);
+
+DGLAPI void		 dgl_sort3(int *a, int *b, int *c);
+DGLAPI int		 dgl_min3(int a, int b, int c);
+DGLAPI int		 dgl_max3(int a, int b, int c);
+DGLAPI int		 dgl_clamp(int v, int left, int right);
+DGLAPI uint32_t	 dgl_blend(uint32_t f, uint32_t b);
+DGLAPI uint32_t	 dgl_bary_color(float s, float t, uint32_t c1, uint32_t c2, uint32_t c3);
 
 DGLAPI inline void dgl_scale_point_2D(dgl_Point2D *p, int scale);
 DGLAPI inline void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
 DGLAPI inline void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t);
 DGLAPI inline void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t);
-DGLAPI void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle);
-DGLAPI void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
+DGLAPI void        dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle);
+DGLAPI void        dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
 
 DGLAPI void dgl_draw_simple_model(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
 DGLAPI void dgl_draw_simple_model_mesh(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
@@ -218,16 +223,15 @@ DGLAPI void dgl_scale_simple_model(dgl_Simple_Model *sm, dgl_Real scale);
 DGLAPI void dgl_translate_simple_model(dgl_Simple_Model *sm, dgl_Point3D translation);
 DGLAPI void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
 
-// TODO: Implement vectors
 // TODO: Implement matrix operations (also provide simd in the future)
 DGLAPI dgl_Mat dgl_mat_alloc(int height, int width);
-DGLAPI void dgl_mat_free(dgl_Mat m);
-DGLAPI void dgl_mat_scale(dgl_Mat m, dgl_Real s);
-DGLAPI void dgl_mat_add(dgl_Mat m1, dgl_Mat m2);
+DGLAPI void    dgl_mat_free(dgl_Mat m);
+DGLAPI void    dgl_mat_scale(dgl_Mat m, dgl_Real s);
+DGLAPI void    dgl_mat_add(dgl_Mat m1, dgl_Mat m2);
 DGLAPI dgl_Mat dgl_mat_mul(dgl_Mat m1, dgl_Mat m2);
-DGLAPI void dgl_mat_print(dgl_Mat m);
-DGLAPI void dgl_mat4_add(dgl_Mat4 m1, dgl_Mat4 m2);
-DGLAPI void dgl_mat4_compose(dgl_Mat4 m1, dgl_Mat4 m2);
+DGLAPI void    dgl_mat_print(dgl_Mat m);
+DGLAPI void    dgl_mat4_add(dgl_Mat4 m1, dgl_Mat4 m2);
+DGLAPI void    dgl_mat4_compose(dgl_Mat4 m1, dgl_Mat4 m2);
 
 // TODO: Maybe do projection this way after implementing matrices, maybe do it dumber
 DGLAPI void dgl_init_proj_params(float fov_deg, float aspect_ratio, dgl_Real *l, dgl_Real *r, dgl_Real *t, dgl_Real *b, dgl_Real n, dgl_Real f);
@@ -1511,6 +1515,28 @@ DGLAPI inline dgl_Real dgl_v3_len(dgl_V3 v){
 
 DGLAPI inline dgl_V3 dgl_v3_unit(dgl_V3 v){
 	return dgl_v3_scale(v, 1.0/dgl_v3_len(v));
+}
+
+DGLAPI inline void dgl_v3_add_mut(dgl_V3 *v1, dgl_V3 v2){
+	v1->x += v2.x;
+	v1->y += v2.y;
+	v1->z += v2.z;
+}
+
+DGLAPI inline void dgl_v3_sub_mut(dgl_V3 *v1, dgl_V3 v2){
+	v1->x -= v2.x;
+	v1->y -= v2.y;
+	v1->z -= v2.z;
+}
+
+DGLAPI inline void dgl_v3_scale_mut(dgl_V3 *v, dgl_Real s){
+	v->x *= s;
+	v->y *= s;
+	v->z *= s;
+}
+
+DGLAPI inline void dgl_v3_unit_mut(dgl_V3 *v){
+	dgl_v3_scale_mut(v, 1.0/dgl_v3_len(*v));
 }
 
 DGLAPI void dgl_sort3(int *a, int *b, int *c){
