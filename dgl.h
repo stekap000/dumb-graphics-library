@@ -181,6 +181,7 @@ DGLAPI dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int 
 DGLAPI void dgl_clear(dgl_Canvas *canvas, uint32_t color);
 DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
 DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
+DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color);
 DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color);
 DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
 DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
@@ -855,6 +856,32 @@ DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h
 	dgl_draw_line_bresenham(canvas, x0, y0, x0, y0 + h, color);
 	dgl_draw_line_bresenham(canvas, x0 + w, y0 + h, x0, y0 + h, color);
 	dgl_draw_line_bresenham(canvas, x0 + w, y0 + h, x0 + w, y0, color);
+}
+
+// TODO: Include blending
+// TODO: Make it more efficient
+DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color) {
+	center_x = DGL_TRANSFORM_COORDINATES_X(center_x);
+	center_y = DGL_TRANSFORM_COORDINATES_Y(center_y, canvas->height);
+
+	int top_left_y = center_y - r;
+	int top_left_x = center_x - r;
+
+	for(size_t y = 0; y < 2*r; ++y) {
+		if(!(top_left_y + (int)y < 0) && !(top_left_y + (int)y >= (int)canvas->height)){
+			for(size_t x = 0; x < 2*r; ++x) {
+				if(!(top_left_x + (int)x < 0) && !(top_left_x + (int)x >= (int)canvas->width)){
+					int pxl = top_left_x + x - center_x;
+					int pyl = top_left_y + y - center_y;
+					unsigned int left_side = pxl*pxl + pyl*pyl;
+					
+					if(left_side >= (r-1)*(r-1) && left_side <= r*r){
+						DGL_SET_PIXEL(*canvas, top_left_x + x, top_left_y + y, dgl_blend(color, DGL_GET_PIXEL(*canvas, top_left_x + x, top_left_y + y)));
+					}
+				}
+			}
+		}
+	}
 }
 
 // TODO: Maybe it is possible to speed this up by iterating only on the portion of circle because of its symmetry
