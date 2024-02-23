@@ -83,9 +83,10 @@
 	#define DGL_PINK	0xFFFF00FF
 #endif
 
-#define DGL_OFFSET_OF(s, f) ((size_t)&(((s*)0)->f))
-#define DGL_SWAP(a, b, T) do { T t = a; a = b; b = t; } while(0)
-#define DGL_LERP(a, b, t) a+(b-a)*t
+#define DGL_OFFSET_OF(s, f) ((size_t)&((((s)*)0)->(f)))
+#define DGL_SWAP(a, b, T) do { T t = (a); (a) = (b); (b) = (t); } while(0)
+#define DGL_LERP(a, b, t) ((a)+((b)-(a))*(t))
+#define DGL_LERP_INVERSE(a, b, value) ((value) > (b)) ? 1 : (((value) - (a))/((b)-(a)));
 #define DGL_SCALE_RGB(a, color) DGL_RGB((int)((a)*DGL_GET_RED(color)), (int)((a)*DGL_GET_GREEN(color)), (int)((a)*DGL_GET_BLUE(color)))
 #define DGL_SCALE_RGBA(a, color) DGL_RGBA((int)((a)*DGL_GET_RED(color)), (int)((a)*DGL_GET_GREEN(color)), (int)((a)*DGL_GET_BLUE(color)), (int)((a)*DGL_GET_ALPHA(color)))
 #define DGL_SUM_RGB(c1, c2) DGL_RGB(DGL_GET_RED(c1) + DGL_GET_RED(c2), DGL_GET_GREEN(c1) + DGL_GET_GREEN(c2), DGL_GET_BLUE(c1) + DGL_GET_BLUE(c2))
@@ -226,10 +227,11 @@ DGLAPI void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_
 // TODO: Implement matrix operations (also provide simd in the future)
 DGLAPI dgl_Mat dgl_mat_alloc(int height, int width);
 DGLAPI void    dgl_mat_free(dgl_Mat m);
-DGLAPI void    dgl_mat_scale(dgl_Mat m, dgl_Real s);
-DGLAPI void    dgl_mat_add(dgl_Mat m1, dgl_Mat m2);
-DGLAPI dgl_Mat dgl_mat_mul(dgl_Mat m1, dgl_Mat m2);
+DGLAPI void    dgl_mat_scale_mut(dgl_Mat m, dgl_Real s);
+DGLAPI void    dgl_mat_add_mut(dgl_Mat m1, dgl_Mat m2);
+DGLAPI dgl_Mat dgl_mat_mul_mut(dgl_Mat m1, dgl_Mat m2);
 DGLAPI void    dgl_mat_print(dgl_Mat m);
+
 DGLAPI void    dgl_mat4_add(dgl_Mat4 m1, dgl_Mat4 m2);
 DGLAPI void    dgl_mat4_compose(dgl_Mat4 m1, dgl_Mat4 m2);
 
@@ -1257,7 +1259,7 @@ DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl
 	v.cells[2] = t.v[0].z;
 	v.cells[3] = 1;
 	
-	v = dgl_mat_mul(proj_mat, v); 
+	v = dgl_mat_mul_mut(proj_mat, v); 
 	pt.v[0].x = v.cells[0];
 	pt.v[0].y = v.cells[1];
 
@@ -1266,7 +1268,7 @@ DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl
 	v.cells[2] = t.v[1].z;
 	v.cells[3] = 1;
 	
-	v = dgl_mat_mul(proj_mat, v); 
+	v = dgl_mat_mul_mut(proj_mat, v); 
 	pt.v[1].x = v.cells[0];
 	pt.v[1].y = v.cells[1];
 
@@ -1275,7 +1277,7 @@ DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl
 	v.cells[2] = t.v[2].z;
 	v.cells[3] = 1;
 	
-	v = dgl_mat_mul(proj_mat, v); 
+	v = dgl_mat_mul_mut(proj_mat, v); 
 	pt.v[2].x = v.cells[0];
 	pt.v[2].y = v.cells[1];
 	*/
@@ -1361,19 +1363,21 @@ DGLAPI void dgl_mat_free(dgl_Mat m){
 	free(m.cells);
 }
 
-DGLAPI void dgl_mat_scale(dgl_Mat m, dgl_Real s){
+DGLAPI void dgl_mat_scale_mut(dgl_Mat m, dgl_Real s){
 	for(int i = 0; i < m.width*m.height; ++i)
 		m.cells[i] *= s;
 }
 
-DGLAPI void dgl_mat_add(dgl_Mat m1, dgl_Mat m2){
+DGLAPI void dgl_mat_add_mut(dgl_Mat m1, dgl_Mat m2){
 	if(m1.height == m2.height && m1.width == m2.width)
 		for(int i = 0; i < m1.width*m1.height; ++i)
 			m1.cells[i] += m2.cells[i];
 }
 
-DGLAPI dgl_Mat dgl_mat_mul(dgl_Mat m1, dgl_Mat m2){
+// TODO: Change this for cache
+DGLAPI dgl_Mat dgl_mat_mul_mut(dgl_Mat m1, dgl_Mat m2){
 	dgl_Mat m = {0};
+	/*
 	if(m1.width == m2.height){
 		m = dgl_mat_alloc(m1.height, m2.width);
 		
@@ -1385,6 +1389,7 @@ DGLAPI dgl_Mat dgl_mat_mul(dgl_Mat m1, dgl_Mat m2){
 			}
 		} 
 	}
+	*/
 
 	return m;
 }
