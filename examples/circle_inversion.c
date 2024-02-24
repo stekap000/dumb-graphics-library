@@ -64,7 +64,7 @@ void draw_inversion(int center_x, int center_y, int r) {
 								DGL_SET_PIXEL(window.canvas,
 											  DGL_TRANSFORM_COORDINATES_X(top_left_x + x),
 											  DGL_TRANSFORM_COORDINATES_Y(top_left_y + y, window.canvas.height),
-											  DGL_GET_PIXEL(window.canvas, (int)temp.x, (int)temp.y));
+											  DGL_GET_PIXEL(window.back_canvas, (int)temp.x, (int)temp.y));
 							}
 						}
 					}
