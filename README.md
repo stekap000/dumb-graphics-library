@@ -2,6 +2,7 @@
 ### General information
 * Library executes code on CPU without parallelization (SIMD support might get added at some point).
 * At any point, library contains functions or types that still serve no purpose, or are there just for experimentation.
+* Library is __stb__ type library with additional blocks (like engine inclusion).
 * Library is header only (```#include "dgl.h"```) with a list of flags and constants that change the behaviour or add additional parts to the program. Use ```#define <flag_name>``` before include statement.\
 List of flags and constants:
   * **DGL_IMPLEMENTATION** - Use provided implementations for functions and not just their declarations.

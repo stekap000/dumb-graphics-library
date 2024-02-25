@@ -6,7 +6,7 @@
 // Every inner point that corresponds to some point outside window will be black in inversion.
 // Artifacts in inversion are a result of float-int casts and the fact that we are simply
 // setting points which are integers, instead of drawing shapes or also coloring neighbours.
-// If you move shape, your eyes will interpolate artifacts for you.
+// If you move the shape, your brain will interpolate it for you.
 
 int width = 600;
 int height = 600;
@@ -87,6 +87,8 @@ void update(float dt) {
 	cx = cursor_pos.x;
 	cy = cursor_pos.y;
 
+	// Draw circle outline and clear inside to black before
+	// drawing inversion.
 	dgl_draw_circle(&window.canvas, cx, cy, circle_radius, DGL_WHITE);
 	dgl_fill_circle(&window.canvas, cx, cy, circle_radius - 2, DGL_BLACK);
 	draw_inversion(cx, cy, circle_radius);
