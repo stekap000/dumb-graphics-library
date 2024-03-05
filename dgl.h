@@ -181,6 +181,7 @@ DGLAPI void              dgl_delete_simple_model(dgl_Simple_Model *sm);
 DGLAPI dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride);
 
 DGLAPI void dgl_clear(dgl_Canvas *canvas, uint32_t color);
+DGLAPI uint32_t dgl_read_pixel(dgl_Canvas *canvas, int x, int y);
 DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, uint32_t color);
 DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
 DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
@@ -808,6 +809,12 @@ DGLAPI void dgl_clear(dgl_Canvas *canvas, uint32_t color){
 	for(int y = 0; y < canvas->height; ++y)
 		for(int x = 0; x < canvas->width; ++x)
 			DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
+}
+
+DGLAPI uint32_t dgl_read_pixel(dgl_Canvas *canvas, int x, int y) {
+	return DGL_GET_PIXEL(*canvas,
+						 DGL_TRANSFORM_COORDINATES_X(x),
+						 DGL_TRANSFORM_COORDINATES_Y(y, canvas->height));
 }
 
 DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, uint32_t color) {

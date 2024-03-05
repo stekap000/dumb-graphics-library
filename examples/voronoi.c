@@ -55,10 +55,8 @@ void draw_voronoi() {
 					pi = i;
 				}
 			}
-			DGL_SET_PIXEL(window.canvas,
-						  DGL_TRANSFORM_COORDINATES_X(x),
-						  DGL_TRANSFORM_COORDINATES_Y(y, HEIGHT),
-						  colors[pi]);
+
+			dgl_fill_pixel(&window.canvas, x, y, colors[pi]);
 		}
 	}
 }

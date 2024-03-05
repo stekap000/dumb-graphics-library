@@ -61,10 +61,13 @@ void draw_inversion(int center_x, int center_y, int r) {
 						if(temp.y >= 0 && temp.y < (int)window.canvas.height) {
 							if(temp.x >=0 && temp.x < (int)window.canvas.width) {
 								// Set current (inner) point color to corresponding outer point
-								DGL_SET_PIXEL(window.canvas,
-											  DGL_TRANSFORM_COORDINATES_X(top_left_x + x),
-											  DGL_TRANSFORM_COORDINATES_Y(top_left_y + y, window.canvas.height),
-											  DGL_GET_PIXEL(window.back_canvas, (int)temp.x, (int)temp.y));
+								dgl_fill_pixel(&window.canvas,
+											   top_left_x + x,
+											   top_left_y + y,
+											   dgl_read_pixel(&window.back_canvas,
+															  (int)temp.x,
+															  (int)temp.y)
+											   );
 							}
 						}
 					}

@@ -10,7 +10,7 @@
 void custom_clear(dgl_Canvas *canvas, uint32_t color, int offset) {
 	for(int i = 0; i < canvas->height; ++i) {
 		for(int j = 0; j < canvas->width; ++j) {
-			DGL_SET_PIXEL(*canvas, j, i, DGL_RGB((i+offset) % 256, (j+offset) % 256, (i+j+offset) % 256));
+			dgl_fill_pixel(canvas, j, i, DGL_RGB((i+offset) % 256, (j+offset) % 256, (i+j+offset) % 256));
 		}
 	}
 }

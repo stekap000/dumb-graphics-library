@@ -35,13 +35,7 @@ void draw_field(dgl_Canvas *canvas, dgl_V3 p1, dgl_V3 p2) {
 			double red = red_1 + red_2;
 			if(red > 255) red = 255;
 
-			// When writing custom function and working with canvas coordinates
-			// we need to transform them to currently set coordinate system before
-			// writing them to canvas.
-			DGL_SET_PIXEL(*canvas,
-						  DGL_TRANSFORM_COORDINATES_X(j),
-						  DGL_TRANSFORM_COORDINATES_Y(i, canvas->height),
-						  DGL_RGB((int)red, 0, 0));
+			dgl_fill_pixel(canvas, j, i, DGL_RGB((int)red, 0, 0));
 		}
 	}
 }
