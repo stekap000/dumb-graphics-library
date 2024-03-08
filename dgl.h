@@ -282,6 +282,16 @@ char dgl_Default_Glyphs[128][DGL_DEFAULT_FONT_HEIGHT][DGL_DEFAULT_FONT_WIDTH] = 
 		{0, 0, 0, 0, 0, 0}
 	
 	},
+	[':'] = {
+		{0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0},
+		{0, 0, 1, 1, 0, 0},
+		{0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0},
+		{0, 0, 1, 1, 0, 0},
+		{0, 0, 0, 0, 0, 0}
+	
+	},
 	['0'] = {
 		{0, 1, 1, 1, 0, 0},
 		{1, 0, 0, 0, 1, 0},
@@ -835,7 +845,7 @@ DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, co
 		// - on cy because of transformation of coordinate systems by dgl_fill_rect
 		int cy = y - i*dy;
 		int cx = x + i*dx;
-		
+
 		const char *glyph = &font->glyphs[text[i]*sizeof(char)*font->width*font->height];
 		
 		// Iterate through glyph mesh
