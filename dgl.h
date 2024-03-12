@@ -154,7 +154,7 @@ typedef struct { dgl_Point3D v[3];	} dgl_Triangle3D;
 typedef struct{
 	dgl_Point3D *vertices;
 	int *indices;
-	uint32_t *colors;
+	dgl_Color *colors;
 	size_t vertices_length;
 	size_t indices_length;
 	size_t colors_length;
@@ -162,7 +162,7 @@ typedef struct{
 
 // This is useful since it allows us to operate only on one portion of pixels (for example use dgl_clear just on one portion)
 typedef struct{
-	uint32_t *pixels;
+	dgl_Color *pixels;
 	int width;
 	int height;
 	int stride;
@@ -180,21 +180,21 @@ DGLAPI int               dgl_save_simple_model(dgl_Simple_Model *sm, char *filen
 DGLAPI void              dgl_delete_simple_model(dgl_Simple_Model *sm);
 DGLAPI dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride);
 
-DGLAPI void dgl_clear(dgl_Canvas *canvas, uint32_t color);
-DGLAPI uint32_t dgl_read_pixel(dgl_Canvas *canvas, int x, int y);
-DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, uint32_t color);
-DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
-DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, uint32_t color);
-DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color);
-DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color);
-DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
-DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color);
-DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c1, uint32_t c2, uint32_t c3);
-DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, uint32_t color);
-DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color);
-DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color);
-DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
-DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color);
+DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color);
+DGLAPI dgl_Color dgl_read_pixel(dgl_Canvas *canvas, int x, int y);
+DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, dgl_Color color);
+DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, dgl_Color color);
+DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, dgl_Color color);
+DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color);
+DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color);
+DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color);
+DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color);
+DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color c1, dgl_Color c2, dgl_Color c3);
+DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, dgl_Color color);
+DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color);
+DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color);
+DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color);
+DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color);
 
 DGLAPI inline dgl_V3	dgl_v3_add(dgl_V3 v1, dgl_V3 v2);
 DGLAPI inline dgl_V3	dgl_v3_sub(dgl_V3 v1, dgl_V3 v2);
@@ -213,8 +213,8 @@ DGLAPI void		 dgl_sort3(int *a, int *b, int *c);
 DGLAPI int		 dgl_min3(int a, int b, int c);
 DGLAPI int		 dgl_max3(int a, int b, int c);
 DGLAPI int		 dgl_clamp(int v, int left, int right);
-DGLAPI uint32_t	 dgl_blend(uint32_t f, uint32_t b);
-DGLAPI uint32_t	 dgl_bary_color(float s, float t, uint32_t c1, uint32_t c2, uint32_t c3);
+DGLAPI dgl_Color	 dgl_blend(dgl_Color f, dgl_Color b);
+DGLAPI dgl_Color	 dgl_bary_color(float s, float t, dgl_Color c1, dgl_Color c2, dgl_Color c3);
 
 DGLAPI inline void dgl_scale_point_2D(dgl_Point2D *p, int scale);
 DGLAPI inline void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
@@ -669,7 +669,7 @@ DGLAPI dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool has_quad
 	dgl_Simple_Model *sm = (dgl_Simple_Model *)calloc(1, sizeof(dgl_Simple_Model));
 	// Just make space for one color that will be used and set it to white by default
 	sm->colors_length = 1;
-	sm->colors = (uint32_t*)malloc(sizeof(uint32_t));
+	sm->colors = (dgl_Color*)malloc(sizeof(dgl_Color));
 	sm->colors[0] = DGL_WHITE;
 
 	char line[100];
@@ -815,26 +815,26 @@ DEFER:
 	return DEFER_RESULT;
 }
 	
-DGLAPI void dgl_clear(dgl_Canvas *canvas, uint32_t color){
+DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color){
 	for(int y = 0; y < canvas->height; ++y)
 		for(int x = 0; x < canvas->width; ++x)
 			DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 }
 
-DGLAPI uint32_t dgl_read_pixel(dgl_Canvas *canvas, int x, int y) {
+DGLAPI dgl_Color dgl_read_pixel(dgl_Canvas *canvas, int x, int y) {
 	return DGL_GET_PIXEL(*canvas,
 						 DGL_TRANSFORM_COORDINATES_X(x),
 						 DGL_TRANSFORM_COORDINATES_Y(y, canvas->height));
 }
 
-DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, uint32_t color) {
+DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, dgl_Color color) {
 	DGL_SET_PIXEL(*canvas,
 				  DGL_TRANSFORM_COORDINATES_X(x),
 				  DGL_TRANSFORM_COORDINATES_Y(y, canvas->height),
 				  color);
 }
 
-DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, uint32_t color){
+DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, dgl_Color color){
 	// This is because we allow vertical and horizontal drawing
 	int dy = ((vertical == true) ? font->height*scale : 0);
 	int dx = ((vertical == false) ? font->width*scale : 0);
@@ -864,7 +864,7 @@ DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, co
 }
 
 // TODO: Maybe it is possible to optimize this further (important because it is also used to draw letters)
-DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h, uint32_t color){
+DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h, dgl_Color color){
 	x0 = DGL_TRANSFORM_COORDINATES_X(x0);
 	y0 = DGL_TRANSFORM_COORDINATES_Y(y0, canvas->height);
 	
@@ -875,7 +875,7 @@ DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h
 					DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 }
 
-DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h, uint32_t color){
+DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h, dgl_Color color){
 	x0 = DGL_TRANSFORM_COORDINATES_X(x0);
 	y0 = DGL_TRANSFORM_COORDINATES_Y(y0, canvas->height);
 
@@ -887,7 +887,7 @@ DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h
 
 // TODO: Include blending
 // TODO: Make it more efficient
-DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color) {
+DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color) {
 	center_x = DGL_TRANSFORM_COORDINATES_X(center_x);
 	center_y = DGL_TRANSFORM_COORDINATES_Y(center_y, canvas->height);
 
@@ -913,11 +913,11 @@ DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size
 
 // TODO: Maybe it is possible to speed this up by iterating only on the portion of circle because of its symmetry
 //		 (for example iterating over bounding box of quarter of the circle)
-DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, uint32_t color){
+DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color){
 	center_x = DGL_TRANSFORM_COORDINATES_X(center_x);
 	center_y = DGL_TRANSFORM_COORDINATES_Y(center_y, canvas->height);
 	
-	uint32_t orig_color = color;
+	dgl_Color orig_color = color;
 	
 	int top_left_y = center_y - r;
 	int top_left_x = center_x - r;
@@ -976,7 +976,7 @@ DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size
 				}
 }
 
-DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color){
+DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color){
 	// We don't need to transform coordinates because dgl_draw_line already does it
 
 	dgl_draw_line_bresenham(canvas, t.v[0].x, t.v[0].y, t.v[1].x, t.v[1].y, color);
@@ -988,7 +988,7 @@ DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uin
 // TODO: Feels like things can be optimized here, but it's not primary now
 // TODO: See how to adapt this code to SIMD
 // @Test It is roughly two times slower that other triangle filling function when using single color
-DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t c1, uint32_t c2, uint32_t c3){
+DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color c1, dgl_Color c2, dgl_Color c3){
    	int x0 = DGL_TRANSFORM_COORDINATES_X(t.v[0].x);
 	int y0 = DGL_TRANSFORM_COORDINATES_Y(t.v[0].y, canvas->height);
 	int x1 = DGL_TRANSFORM_COORDINATES_X(t.v[1].x);
@@ -1019,7 +1019,7 @@ DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t
 }
 
 // TODO: Find out the reason for weird shaded triangles apearing when rendering model with filled triangles
-DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uint32_t color){
+DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color){
 	// We don't iterate through bounding square, but directly through triangle points
 	// This way, we don't need to check whether point is in triangle and we loop through half as many points
 	
@@ -1134,7 +1134,7 @@ DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, uin
 
 // This is cheap but not great way to draw line since it struggles in cases of steep slopes
 // Still, it is left here and can be used
-DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color){
+DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color){
 	x0 = DGL_TRANSFORM_COORDINATES_X(x0);
 	y0 = DGL_TRANSFORM_COORDINATES_Y(y0, canvas->height);
 	x1 = DGL_TRANSFORM_COORDINATES_X(x1);
@@ -1166,7 +1166,7 @@ DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, ui
 
 // TODO: It might be possible to not duplicate code in if and else parts because of symmetry
 // TODO: Maybe add antialiasing capability
-DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, uint32_t color){
+DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color){
 	x0 = DGL_TRANSFORM_COORDINATES_X(x0);
 	y0 = DGL_TRANSFORM_COORDINATES_Y(y0, canvas->height);
 	x1 = DGL_TRANSFORM_COORDINATES_X(x1);
@@ -1301,7 +1301,7 @@ DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, 
 
 // TODO: For now, we are just doing orthogonal projection because it requires minimal calculation. Move to perspective projection
 // TODO: Maybe create projection screen type or something similar that will hold focus point and direction the screen is facing
-DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color){
+DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color){
     dgl_Triangle2D pt;
 	//dgl_Mat v = dgl_mat_alloc(4, 1);
 	
@@ -1347,7 +1347,7 @@ DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl
 	//dgl_mat_free(v);
 }
 
-DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, uint32_t color){
+DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color){
 	// Perspective projection
 	
 	// Orthogonal projection (seems to work)
@@ -1500,12 +1500,12 @@ DGLAPI dgl_Mat dgl_mat_get_proj(dgl_Real l, dgl_Real r, dgl_Real t, dgl_Real b, 
 	return m;
 }
 
-DGLAPI uint32_t dgl_blend(uint32_t f, uint32_t b){
+DGLAPI dgl_Color dgl_blend(dgl_Color f, dgl_Color b){
 	// These were used in dgl_Real arithmetic
-	// uint32_t alpha 	= (uint32_t)((a1    +    a2*(1-a1))*255);
-	// uint32_t red 	= (uint32_t)((a1*r1 + r2*a2*(1-a1))*255);
-	// uint32_t green 	= (uint32_t)((a1*g1 + g2*a2*(1-a1))*255);
-	// uint32_t blue 	= (uint32_t)((a1*b1 + b2*a2*(1-a1))*255);
+	// dgl_Color alpha 	= (dgl_Color)((a1    +    a2*(1-a1))*255);
+	// dgl_Color red 	= (dgl_Color)((a1*r1 + r2*a2*(1-a1))*255);
+	// dgl_Color green 	= (dgl_Color)((a1*g1 + g2*a2*(1-a1))*255);
+	// dgl_Color blue 	= (dgl_Color)((a1*b1 + b2*a2*(1-a1))*255);
 
 	// Conversion to integer arithmetic below
 	uint8_t a1 = ((f >> 24) & 0xFF);
@@ -1626,10 +1626,10 @@ DGLAPI int dgl_max3(int a, int b, int c){
 	}
 }
 
-DGLAPI uint32_t dgl_bary_color(float s, float t, uint32_t c1, uint32_t c2, uint32_t c3){
-	uint32_t a = DGL_SCALE_RGB(s, c1);
-	uint32_t b = DGL_SCALE_RGB(t, c2);
-	uint32_t c = DGL_SCALE_RGB(1-s-t, c3);
+DGLAPI dgl_Color dgl_bary_color(float s, float t, dgl_Color c1, dgl_Color c2, dgl_Color c3){
+	dgl_Color a = DGL_SCALE_RGB(s, c1);
+	dgl_Color b = DGL_SCALE_RGB(t, c2);
+	dgl_Color c = DGL_SCALE_RGB(1-s-t, c3);
 	return DGL_SUM_RGB(DGL_SUM_RGB(a, b), c);
 }
 
@@ -1639,7 +1639,7 @@ DGLAPI int dgl_clamp(int v, int left, int right){
 	return v;
 }
 
-DGLAPI inline uint32_t DGL_RGBA_TO_BGRA(uint32_t v){
+DGLAPI inline dgl_Color DGL_RGBA_TO_BGRA(dgl_Color v){
 	uint8_t t = v & 0xFF;
 	v &= 0xFFFFFF00;
 	v |= ((v & 0x00FF0000) >> 16);
@@ -1692,7 +1692,7 @@ void write_debug_string(char *str){
 
 typedef struct{
 	HBITMAP hbm;
-	uint32_t* data;
+	dgl_Color* data;
 	BITMAPINFO bmi;
 } _Dib_Buffer;
 
@@ -1728,12 +1728,12 @@ void _windows_init(){
 	if(window.width <= 0) window.width = DEFAULT_WINDOW_WIDTH;
 	if(window.height <= 0) window.height = DEFAULT_WINDOW_HEIGHT;
 		
-	window.canvas.pixels = calloc(window.width * window.height, sizeof(uint32_t));
+	window.canvas.pixels = calloc(window.width * window.height, sizeof(dgl_Color));
 	window.canvas.width = window.width;
 	window.canvas.height = window.height;
 	window.canvas.stride = window.width;
 
-	window.back_canvas.pixels = calloc(window.width * window.height, sizeof(uint32_t));
+	window.back_canvas.pixels = calloc(window.width * window.height, sizeof(dgl_Color));
 	window.back_canvas.width = window.width;
 	window.back_canvas.height = window.height;
 	window.back_canvas.stride = window.width;
@@ -1761,11 +1761,11 @@ void _windows_update(HWND window_handle, float dt){
 	cursor_pos.y = DGL_TRANSFORM_COORDINATES_Y(_cursor_correction_y, window.canvas.height);
 #endif
 
-	memcpy(window.canvas.pixels, window.back_canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
+	memcpy(window.canvas.pixels, window.back_canvas.pixels, sizeof(dgl_Color)*window.canvas.width*window.canvas.height);
 
 	update(dt);
 
-	memcpy(_front_buffer.data, window.canvas.pixels, sizeof(uint32_t)*window.canvas.width*window.canvas.height);
+	memcpy(_front_buffer.data, window.canvas.pixels, sizeof(dgl_Color)*window.canvas.width*window.canvas.height);
 }
 
 void _windows_end(){
