@@ -822,19 +822,20 @@ DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color){
 }
 
 DGLAPI dgl_Color dgl_read_pixel(dgl_Canvas *canvas, int x, int y) {
+	x = DGL_TRANSFORM_COORDINATES_X(x);
+	y = DGL_TRANSFORM_COORDINATES_Y(y, canvas->height);
 	if(x >= 0 && x < canvas->width && y >= 0 && y < canvas->height)
-		return DGL_GET_PIXEL(*canvas,
-							 DGL_TRANSFORM_COORDINATES_X(x),
-							 DGL_TRANSFORM_COORDINATES_Y(y, canvas->height));
+		return DGL_GET_PIXEL(*canvas, x, y);
 	return DGL_BLACK;
 }
 
 DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, dgl_Color color) {
-	if(x >= 0 && x < canvas->width && y >= 0 && y < canvas->height)
-		DGL_SET_PIXEL(*canvas,
-					  DGL_TRANSFORM_COORDINATES_X(x),
-					  DGL_TRANSFORM_COORDINATES_Y(y, canvas->height),
-					  color);
+	x = DGL_TRANSFORM_COORDINATES_X(x);
+	y = DGL_TRANSFORM_COORDINATES_Y(y, canvas->height);
+	if(x >= 0 && x < canvas->width && y >= 0 && y < canvas->height) {
+		dgl_Color c = dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y));
+		DGL_SET_PIXEL(*canvas, x, y, c);
+	}
 }
 
 DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, dgl_Color color){
