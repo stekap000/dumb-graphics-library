@@ -213,8 +213,8 @@ DGLAPI void		 dgl_sort3(int *a, int *b, int *c);
 DGLAPI int		 dgl_min3(int a, int b, int c);
 DGLAPI int		 dgl_max3(int a, int b, int c);
 DGLAPI int		 dgl_clamp(int v, int left, int right);
-DGLAPI dgl_Color	 dgl_blend(dgl_Color f, dgl_Color b);
-DGLAPI dgl_Color	 dgl_bary_color(float s, float t, dgl_Color c1, dgl_Color c2, dgl_Color c3);
+DGLAPI dgl_Color dgl_blend(dgl_Color f, dgl_Color b);
+DGLAPI dgl_Color dgl_bary_color(float s, float t, dgl_Color c1, dgl_Color c2, dgl_Color c3);
 
 DGLAPI inline void dgl_scale_point_2D(dgl_Point2D *p, int scale);
 DGLAPI inline void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
@@ -822,16 +822,19 @@ DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color){
 }
 
 DGLAPI dgl_Color dgl_read_pixel(dgl_Canvas *canvas, int x, int y) {
-	return DGL_GET_PIXEL(*canvas,
-						 DGL_TRANSFORM_COORDINATES_X(x),
-						 DGL_TRANSFORM_COORDINATES_Y(y, canvas->height));
+	if(x >= 0 && x < canvas->width && y >= 0 && y < canvas->height)
+		return DGL_GET_PIXEL(*canvas,
+							 DGL_TRANSFORM_COORDINATES_X(x),
+							 DGL_TRANSFORM_COORDINATES_Y(y, canvas->height));
+	return DGL_BLACK;
 }
 
 DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, dgl_Color color) {
-	DGL_SET_PIXEL(*canvas,
-				  DGL_TRANSFORM_COORDINATES_X(x),
-				  DGL_TRANSFORM_COORDINATES_Y(y, canvas->height),
-				  color);
+	if(x >= 0 && x < canvas->width && y >= 0 && y < canvas->height)
+		DGL_SET_PIXEL(*canvas,
+					  DGL_TRANSFORM_COORDINATES_X(x),
+					  DGL_TRANSFORM_COORDINATES_Y(y, canvas->height),
+					  color);
 }
 
 DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, dgl_Color color){
