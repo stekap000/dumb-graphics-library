@@ -27,6 +27,9 @@
 		5. Functions have all lower case letters
 */
 
+// TODO: Depth buffer for solid colors.
+// TODO: Depth buffer that also works with alpha blending.
+
 #ifndef DGL_DECLARATION
 #define DGL_DECLARATION
 #define DGLAPI static
@@ -158,7 +161,7 @@ typedef struct{
 	size_t vertices_length;
 	size_t indices_length;
 	size_t colors_length;
-}dgl_Simple_Model;
+} dgl_Simple_Model;
 
 // This is useful since it allows us to operate only on one portion of pixels (for example use dgl_clear just on one portion)
 typedef struct{
@@ -172,29 +175,41 @@ typedef struct{
 typedef struct{
 	size_t width, height;	// This must match with glyph mesh dimensions
 	char *glyphs;			// This allows us to iterate through 3D matrix character by character
-}dgl_Font;
+} dgl_Font;
+
+DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color);
+DGLAPI dgl_Color dgl_read_pixel(dgl_Canvas *canvas, int x, int y);
+DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, dgl_Color color);
+DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, dgl_Color color);
+DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, dgl_Color color);
+DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, dgl_Color color);
+DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color);
+DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color);
+DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color);
+DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color);
+DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color);
+DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color c1, dgl_Color c2, dgl_Color c3);
+DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color);
+DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color);
+DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color);
 
 DGLAPI dgl_Errno         dgl_render_ppm(dgl_Canvas *canvas, char *filename);
 DGLAPI dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool has_quads);
 DGLAPI int               dgl_save_simple_model(dgl_Simple_Model *sm, char *filename);
 DGLAPI void              dgl_delete_simple_model(dgl_Simple_Model *sm);
 DGLAPI dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride);
+DGLAPI void dgl_draw_simple_model(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
+DGLAPI void dgl_draw_simple_model_mesh(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
+DGLAPI void dgl_scale_simple_model(dgl_Simple_Model *sm, dgl_Real scale);
+DGLAPI void dgl_translate_simple_model(dgl_Simple_Model *sm, dgl_Point3D translation);
+DGLAPI void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
 
-DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color);
-DGLAPI dgl_Color dgl_read_pixel(dgl_Canvas *canvas, int x, int y);
-DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, dgl_Color color);
-DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, dgl_Color color);
-DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, dgl_Color color);
-DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color);
-DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color);
-DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color);
-DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color);
-DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color c1, dgl_Color c2, dgl_Color c3);
-DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, dgl_Color color);
-DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color);
-DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color);
-DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color);
-DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color);
+DGLAPI inline void dgl_scale_point_2D(dgl_Point2D *p, int scale);
+DGLAPI inline void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
+DGLAPI inline void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t);
+DGLAPI inline void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t);
+DGLAPI void        dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle);
+DGLAPI void        dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
 
 DGLAPI inline dgl_V3	dgl_v3_add(dgl_V3 v1, dgl_V3 v2);
 DGLAPI inline dgl_V3	dgl_v3_sub(dgl_V3 v1, dgl_V3 v2);
@@ -203,7 +218,6 @@ DGLAPI inline dgl_Real	dgl_v3_dot(dgl_V3 v1, dgl_V3 v2);
 DGLAPI inline dgl_Real	dgl_v3_lensq(dgl_V3 v);
 DGLAPI inline dgl_Real	dgl_v3_len(dgl_V3 v);
 DGLAPI inline dgl_V3	dgl_v3_unit(dgl_V3 v);
-
 DGLAPI inline void		dgl_v3_add_mut(dgl_V3 *v1, dgl_V3 v2);
 DGLAPI inline void		dgl_v3_sub_mut(dgl_V3 *v1, dgl_V3 v2);
 DGLAPI inline void		dgl_v3_scale_mut(dgl_V3 *v, dgl_Real s);
@@ -216,19 +230,6 @@ DGLAPI int		 dgl_clamp(int v, int left, int right);
 DGLAPI dgl_Color dgl_blend(dgl_Color f, dgl_Color b);
 DGLAPI dgl_Color dgl_bary_color(float s, float t, dgl_Color c1, dgl_Color c2, dgl_Color c3);
 
-DGLAPI inline void dgl_scale_point_2D(dgl_Point2D *p, int scale);
-DGLAPI inline void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale);
-DGLAPI inline void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t);
-DGLAPI inline void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t);
-DGLAPI void        dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle);
-DGLAPI void        dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
-
-DGLAPI void dgl_draw_simple_model(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
-DGLAPI void dgl_draw_simple_model_mesh(dgl_Canvas *canvas, const dgl_Simple_Model *sm, dgl_Mat proj_mat);
-DGLAPI void dgl_scale_simple_model(dgl_Simple_Model *sm, dgl_Real scale);
-DGLAPI void dgl_translate_simple_model(dgl_Simple_Model *sm, dgl_Point3D translation);
-DGLAPI void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z);
-
 // TODO: Implement matrix operations (also provide simd in the future)
 DGLAPI dgl_Mat dgl_mat_alloc(int height, int width);
 DGLAPI void    dgl_mat_free(dgl_Mat m);
@@ -236,7 +237,6 @@ DGLAPI void    dgl_mat_scale_mut(dgl_Mat m, dgl_Real s);
 DGLAPI void    dgl_mat_add_mut(dgl_Mat m1, dgl_Mat m2);
 DGLAPI dgl_Mat dgl_mat_mul_mut(dgl_Mat m1, dgl_Mat m2);
 DGLAPI void    dgl_mat_print(dgl_Mat m);
-
 DGLAPI void    dgl_mat4_add(dgl_Mat4 m1, dgl_Mat4 m2);
 DGLAPI void    dgl_mat4_compose(dgl_Mat4 m1, dgl_Mat4 m2);
 
@@ -629,192 +629,6 @@ dgl_Font dgl_default_font = {
 
 #ifdef DGL_IMPLEMENTATION
 
-DGLAPI void dgl_scale_point_2D(dgl_Point2D *p, int scale){ p->x *= scale; p->y *= scale; }
-DGLAPI void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale){ p->x *= scale; p->y *= scale; p->z *= scale; }
-DGLAPI void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t){ p->x += t.x; p->y += t.y; }
-DGLAPI void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t){ p->x += t.x; p->y += t.y; p->z += t.z; }
-
-// TODO: Rotation like this is of course not the best way but will do for now
-DGLAPI void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle){
-	dgl_Point2D tp = (*p);
-	p->x = cos(angle)*tp.x - sin(angle)*tp.y;
-	p->y = sin(angle)*tp.x + cos(angle)*tp.y;
-}
-DGLAPI void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z){
-	dgl_Real sin_x = sin(angle_x);
-	dgl_Real cos_x = cos(angle_x);
-	dgl_Real sin_y = sin(angle_y);
-	dgl_Real cos_y = cos(angle_y);
-	dgl_Real sin_z = sin(angle_z);
-	dgl_Real cos_z = cos(angle_z);
-	
-	dgl_Point3D tp = (*p);
-	p->y = cos_x*tp.y - sin_x*tp.z;
-	p->z = sin_x*tp.y + cos_x*tp.z;
-	tp = (*p);
-	p->x =  cos_y*tp.x + sin_y*tp.z;
-	p->z = -sin_y*tp.x + cos_y*tp.z;
-	tp = (*p);
-	p->x = cos_z*tp.x - sin_z*tp.y;
-	p->y = sin_z*tp.x + cos_z*tp.y;
-}
-
-// TODO: We can also write our own functionality in the future (strtok is just dumb)
-// We can load models that contain triangles and quads, but not arbitrary faces (no need for now)
-#include <string.h>
-DGLAPI dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool has_quads){
-	FILE *file = fopen(filename, "r");
-	if(file == NULL) return NULL;
-
-	dgl_Simple_Model *sm = (dgl_Simple_Model *)calloc(1, sizeof(dgl_Simple_Model));
-	// Just make space for one color that will be used and set it to white by default
-	sm->colors_length = 1;
-	sm->colors = (dgl_Color*)malloc(sizeof(dgl_Color));
-	sm->colors[0] = DGL_WHITE;
-
-	char line[100];
-	
-	// Go through file and see how many vertices and faces are there
-	while(fgets(line, 100, file)){
-		if(line[0] == 'v' && line[1] == ' ') ++(sm->vertices_length);
-		else if(line[0] == 'f') sm->indices_length += (3 + has_quads*3);
-	}
-
-	// Allocate space for vertices and indices in simple model
-	sm->vertices = (dgl_Point3D *)malloc(sizeof(dgl_Point3D) * sm->vertices_length);
-	sm->indices = (int *)malloc(sizeof(int) * sm->indices_length);
-	
-	rewind(file);
-
-   	// We are just looking for vertices and indices(faces)
-	int vertex_index = 0;
-	int index_index = 0;  // In the end, this also tells us how many indices we actually have
-	char *f1, *f2, *f3, *f4;
-	while(fgets(line, 100, file)){
-		if(line[0] == 'v' && line[1] == ' '){
-			// Take out 'v'
-			strtok(line, " ");
-
-			// For three vertex coordinates
-			sm->vertices[vertex_index].x = atof(strtok(NULL, " "));
-			sm->vertices[vertex_index].y = atof(strtok(NULL, " "));
-			sm->vertices[vertex_index].z = atof(strtok(NULL, " "));
-
-			++vertex_index;
-		}
-		else if(line[0] == 'f'){
-   			// Take out 'f'
-			strtok(line, " ");
-
-			// Temporarily save three parts of 'f' line
-			f1 = strtok(NULL, " ");
-			f2 = strtok(NULL, " ");
-			f3 = strtok(NULL, " ");
-			// For potential quad
-			f4 = strtok(NULL, " ");
-
-			// -1 because .obj file stores indices starting from 1
-   			sm->indices[index_index++] = atoi(strtok(f1, "/")) - 1;
-		   	sm->indices[index_index++] = atoi(strtok(f2, "/")) - 1;
-   			sm->indices[index_index++] = atoi(strtok(f3, "/")) - 1;
-
-			// If face is a quad then form additional triangle
-			if(has_quads && f4 != NULL && f4[0] != '\n'){
-				sm->indices[index_index++] = atoi(f1) - 1;
-				sm->indices[index_index++] = atoi(f3) - 1;
-				sm->indices[index_index++] = atoi(strtok(f4, "/")) - 1;
-			}
-		}
-	}
-	
-	// Reallocate indices by using malloc and memcpy since we know exact size (realloc is too slow for this)
-	int *temp = (int *)calloc(index_index, sizeof(int));
-	memcpy(temp, sm->indices, sizeof(int) * index_index);
-	free(sm->indices);
-	sm->indices_length = index_index;
-	sm->indices = temp;
-	
-	fclose(file);
-	return sm;
-}
-
-DGLAPI void dgl_delete_simple_model(dgl_Simple_Model *sm){
-	free(sm->vertices);
-	free(sm->indices);
-	free(sm->colors);
-	free(sm);
-}
-
-// This is a very forceful way to reduce model complexity (by making it disconnected)
-// The reason it works is that removal of triangles will roughly be uniform because of how
-// locally close triangles are defined locally close in files
-DGLAPI dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride){
-	int temp_length = sm->indices_length/stride;
-	int *temp = (int *)malloc(sizeof(int)*temp_length);
-
-	int temp_index = 0;
-	for(size_t i = 0; i < sm->indices_length/3 && temp_index < temp_length - 2; ++i){
-		if(i % stride == 0){
-			temp[temp_index++] = sm->indices[i*3];
-			temp[temp_index++] = sm->indices[i*3 + 1];
-			temp[temp_index++] = sm->indices[i*3 + 2];
-		}
-	}
-
-	free(sm->indices);
-	sm->indices_length /= stride;
-	sm->indices = temp;
-
-	return sm;
-}
-
-// TODO: Create function that will take model and reduce number of triangles but still keep
-// the mesh connected (decimation algorithm)
-
-DGLAPI int dgl_save_simple_model(dgl_Simple_Model *sm, char *filename){
-	int DEFER_RESULT = 0;
-	
-	FILE *file = fopen(filename, "w");
-	if(file == NULL) return -1;
-
-	fprintf(file, "# Dgl Simple Model [vertices: %d, indices: %d]\n", sm->vertices_length, sm->indices_length);
-
-	for(size_t i = 0; i < sm->vertices_length; ++i){
-		fprintf(file, "v %lf %lf %lf\n", sm->vertices[i].x, sm->vertices[i].y, sm->vertices[i].z);
-		if(ferror(file)) DEFER_RETURN(errno);
-	}
-
-	for(size_t i = 0; i < sm->indices_length; i += 3){
-		// Add 1 because .obj uses indexing from 1
-		fprintf(file, "f %d %d %d\n", sm->indices[i] + 1, sm->indices[i+1] + 1, sm->indices[i+2] + 1);
-		if(ferror(file)) DEFER_RETURN(errno);
-	}
-
-DEFER:
-	fclose(file);
-	return DEFER_RESULT;
-}
-
-// TODO: Adapt this code, so it fits within specific mode of operation (like DGL_TARGET_WINDOWS)
-DGLAPI dgl_Errno dgl_render_ppm(dgl_Canvas *canvas, char *filename){
-	int DEFER_RESULT = 0;
-	
-	FILE *file = fopen(filename, "wb");
-	if(file == NULL) return -1;
-	
-	fprintf(file, "P6\n%d %d\n255\n", (unsigned int)canvas->width, (unsigned int)canvas->height);
-	if(ferror(file)) DEFER_RETURN(errno);
-	
-	for(int i = 0; i < canvas->width*canvas->height; ++i){
-		fwrite(&canvas->pixels[i], sizeof(char), 3, file);
-		if(ferror(file)) DEFER_RETURN(errno);
-	}
-	
-DEFER:
-	fclose(file);
-	return DEFER_RESULT;
-}
-	
 DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color){
 	for(int y = 0; y < canvas->height; ++y)
 		for(int x = 0; x < canvas->width; ++x)
@@ -889,32 +703,6 @@ DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h
 	dgl_draw_line_bresenham(canvas, x0 + w, y0 + h, x0 + w, y0, color);
 }
 
-// TODO: Include blending
-// TODO: Make it more efficient
-DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color) {
-	center_x = DGL_TRANSFORM_COORDINATES_X(center_x);
-	center_y = DGL_TRANSFORM_COORDINATES_Y(center_y, canvas->height);
-
-	int top_left_y = center_y - r;
-	int top_left_x = center_x - r;
-
-	for(size_t y = 0; y < 2*r; ++y) {
-		if(!(top_left_y + (int)y < 0) && !(top_left_y + (int)y >= (int)canvas->height)){
-			for(size_t x = 0; x < 2*r; ++x) {
-				if(!(top_left_x + (int)x < 0) && !(top_left_x + (int)x >= (int)canvas->width)){
-					int pxl = top_left_x + x - center_x;
-					int pyl = top_left_y + y - center_y;
-					unsigned int left_side = pxl*pxl + pyl*pyl;
-					
-					if(left_side >= (r-1)*(r-1) && left_side <= r*r){
-						DGL_SET_PIXEL(*canvas, top_left_x + x, top_left_y + y, dgl_blend(color, DGL_GET_PIXEL(*canvas, top_left_x + x, top_left_y + y)));
-					}
-				}
-			}
-		}
-	}
-}
-
 // TODO: Maybe it is possible to speed this up by iterating only on the portion of circle because of its symmetry
 //		 (for example iterating over bounding box of quarter of the circle)
 DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color){
@@ -980,159 +768,29 @@ DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size
 				}
 }
 
-DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color){
-	// We don't need to transform coordinates because dgl_draw_line already does it
+// TODO: Include blending
+// TODO: Make it more efficient
+DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color) {
+	center_x = DGL_TRANSFORM_COORDINATES_X(center_x);
+	center_y = DGL_TRANSFORM_COORDINATES_Y(center_y, canvas->height);
 
-	dgl_draw_line_bresenham(canvas, t.v[0].x, t.v[0].y, t.v[1].x, t.v[1].y, color);
-	dgl_draw_line_bresenham(canvas, t.v[0].x, t.v[0].y, t.v[2].x, t.v[2].y, color);
-	dgl_draw_line_bresenham(canvas, t.v[1].x, t.v[1].y, t.v[2].x, t.v[2].y, color);
-}
+	int top_left_y = center_y - r;
+	int top_left_x = center_x - r;
 
-// TODO: Move vertex color information into triangle
-// TODO: Feels like things can be optimized here, but it's not primary now
-// TODO: See how to adapt this code to SIMD
-// @Test It is roughly two times slower that other triangle filling function when using single color
-DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color c1, dgl_Color c2, dgl_Color c3){
-   	int x0 = DGL_TRANSFORM_COORDINATES_X(t.v[0].x);
-	int y0 = DGL_TRANSFORM_COORDINATES_Y(t.v[0].y, canvas->height);
-	int x1 = DGL_TRANSFORM_COORDINATES_X(t.v[1].x);
-	int y1 = DGL_TRANSFORM_COORDINATES_Y(t.v[1].y, canvas->height);
-	int x2 = DGL_TRANSFORM_COORDINATES_X(t.v[2].x);
-	int y2 = DGL_TRANSFORM_COORDINATES_Y(t.v[2].y, canvas->height);
-
-	// Find bounding box
-	int bl = dgl_min3(x0, x1, x2);
-	int br = dgl_max3(x0, x1, x2);
-	int bt = dgl_max3(y0, y1, y2);
-	int bb = dgl_min3(y0, y1, y2);
-
-	float denom = (y1-y2)*(x0-x2) + (x2-x1)*(y0-y2);
-	
-	// Fill based on barycentric coords
-	for(int y = bb; y <= bt; ++y)
-		if(y > 0 && y < (int)canvas->height)
-			for(int x = bl; x <= br; ++x)
-				if(x > 0 && x < (int)canvas->width){
-					float l1 = ((y1-y2)*(x-x2) + (x2-x1)*(y-y2)) / denom;
-					float l2 = ((y2-y0)*(x-x2) + (x0-x2)*(y-y2)) / denom;
-					//float l3 = 1 - l1 - l2;
-
-					if(0 <= l1 && l1 <= 1 && 0 <= l2 && l2 <= 1 && (l1+l2) <= 1)
-						DGL_SET_PIXEL(*canvas, x, y, dgl_blend(dgl_bary_color(l1, l2, c1, c2, c3), DGL_GET_PIXEL(*canvas, x, y)));
+	for(size_t y = 0; y < 2*r; ++y) {
+		if(!(top_left_y + (int)y < 0) && !(top_left_y + (int)y >= (int)canvas->height)){
+			for(size_t x = 0; x < 2*r; ++x) {
+				if(!(top_left_x + (int)x < 0) && !(top_left_x + (int)x >= (int)canvas->width)){
+					int pxl = top_left_x + x - center_x;
+					int pyl = top_left_y + y - center_y;
+					unsigned int left_side = pxl*pxl + pyl*pyl;
+					
+					if(left_side >= (r-1)*(r-1) && left_side <= r*r){
+						DGL_SET_PIXEL(*canvas, top_left_x + x, top_left_y + y, dgl_blend(color, DGL_GET_PIXEL(*canvas, top_left_x + x, top_left_y + y)));
+					}
 				}
-}
-
-// TODO: Find out the reason for weird shaded triangles apearing when rendering model with filled triangles
-DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color){
-	// We don't iterate through bounding square, but directly through triangle points
-	// This way, we don't need to check whether point is in triangle and we loop through half as many points
-	
-	// We force triangle points to obey:
-	// 1. (x0, y0) is the top point
-	// 2. (x2, y2) is the bottom point
-	
-	int x0 = DGL_TRANSFORM_COORDINATES_X(t.v[0].x);
-	int y0 = DGL_TRANSFORM_COORDINATES_Y(t.v[0].y, canvas->height);
-	int x1 = DGL_TRANSFORM_COORDINATES_X(t.v[1].x);
-	int y1 = DGL_TRANSFORM_COORDINATES_Y(t.v[1].y, canvas->height);
-	int x2 = DGL_TRANSFORM_COORDINATES_X(t.v[2].x);
-	int y2 = DGL_TRANSFORM_COORDINATES_Y(t.v[2].y, canvas->height);
-	
-	// Completely degenerate horizontal line triangle
-	if(y0 == y1 && y0 == y2){
-		// Horizontal line out of the screen
-		if(y0 < 0 || y0 >= (int)canvas->height) return;
-		
-		// Force order x0 <= x1 <= x2
-		if(x0 > x1) DGL_SWAP(x0, x1, int);
-		if(x1 > x2) DGL_SWAP(x1, x2, int);
-		if(x0 > x1) DGL_SWAP(x0, x1, int);
-		
-		// Draw horizontal line
-		for(int x = x0; x <= x2; ++x)
-			if(x >= 0 && x < (int)canvas->width)
-				DGL_SET_PIXEL(*canvas, x, y0, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y0)));
-		
-		return;
-	}
-	
-	// Completely degenerate vertical line triangle
-	if(x0 == x1 && x0 == x2){
-		// Vertical line out of the screen
-		if(x0 < 0 || x0 >= (int)canvas->width) return;
-		
-		// Force order y0 <= y1 <= y2
-		if(y0 > y1) DGL_SWAP(y0, y1, int);
-		if(y1 > y2) DGL_SWAP(y1, y2, int);
-		if(y0 > y1) DGL_SWAP(y0, y1, int);
-		
-		// Draw vertical line
-		for(int y = y0; y <= y2; ++y)
-			if(y >= 0 && y < (int)canvas->height)
-				DGL_SET_PIXEL(*canvas, x0, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x0, y)));
-		
-		return;
-	}
-	
-	// Since triangle primitive is frequent, we won't use sort3, but instead implement it directly
-	// Force first two rules
-	if(y0 > y1){
-		DGL_SWAP(y0, y1, int);
-		DGL_SWAP(x0, x1, int);
-	}
-	
-	if(y1 > y2){
-		DGL_SWAP(y1, y2, int);
-		DGL_SWAP(x1, x2, int);
-	}
-	
-	if(y0 > y1){
-		DGL_SWAP(y0, y1, int);
-		DGL_SWAP(x0, x1, int);
-	}
-	
-	int dy10 = y1 - y0;
-	int dx10 = x1 - x0;
-	int dy20 = y2 - y0;
-	int dx20 = x2 - x0;
-	int dy21 = y2 - y1;
-	int dx21 = x2 - x1;
-	
-	// Upper part of the triangle (bounded from below by horizontal line from (x1,y1) to line ((x0,y0),(x2,y2))
-
-	if(dy10 != 0 && dy20 != 0){
-		if(x1 > x0){
-			DGL_SWAP(dy10, dy20, int);
-			DGL_SWAP(dx10, dx20, int);
+			}
 		}
-	
-		for(int y = y0; y < y1; ++y)
-			if(y >= 0 && y < (int)canvas->height)
-				for(int x = dx10*(y-y0)/dy10 + x0; x <= dx20*(y-y0)/dy20 + x0; ++x)
-					if(x >= 0 && x < (int)canvas->width)
-						DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
-		
-		if(x1 > x0){
-			DGL_SWAP(dy10, dy20, int);
-			DGL_SWAP(dx10, dx20, int);
-		}
-	}
-	
-	// Lower part of the triangle (bounded from above by horizontal line from (x1,y1) to line ((x0,y0),(x2,y2))
-	if(dy21 != 0 && dy20 != 0){
-		int y1_temp = y1;
-		if(x1 > x0){
-			DGL_SWAP(dy21, dy20, int);
-			DGL_SWAP(dx21, dx20, int);
-			DGL_SWAP(y1, y0, int);
-			DGL_SWAP(x1, x0, int);
-		}
-	
-		for(int y = y1_temp; y < y2; ++y)
-			if(y >= 0 && y < (int)canvas->height)
-				for(int x = dx21*(y-y1)/dy21 + x1; x <= dx20*(y-y0)/dy20 + x0; ++x) 
-					if(x >= 0 && x < (int)canvas->width)
-						DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 	}
 }
 
@@ -1303,6 +961,177 @@ DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, 
 	}
 }
 
+// TODO: Find out the reason for weird shaded triangles apearing when rendering model with filled triangles
+DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color){
+	// We don't iterate through bounding square, but directly through triangle points
+	// This way, we don't need to check whether point is in triangle and we loop through half as many points
+	
+	// We force triangle points to obey:
+	// 1. (x0, y0) is the top point
+	// 2. (x2, y2) is the bottom point
+	
+	int x0 = DGL_TRANSFORM_COORDINATES_X(t.v[0].x);
+	int y0 = DGL_TRANSFORM_COORDINATES_Y(t.v[0].y, canvas->height);
+	int x1 = DGL_TRANSFORM_COORDINATES_X(t.v[1].x);
+	int y1 = DGL_TRANSFORM_COORDINATES_Y(t.v[1].y, canvas->height);
+	int x2 = DGL_TRANSFORM_COORDINATES_X(t.v[2].x);
+	int y2 = DGL_TRANSFORM_COORDINATES_Y(t.v[2].y, canvas->height);
+	
+	// Completely degenerate horizontal line triangle
+	if(y0 == y1 && y0 == y2){
+		// Horizontal line out of the screen
+		if(y0 < 0 || y0 >= (int)canvas->height) return;
+		
+		// Force order x0 <= x1 <= x2
+		if(x0 > x1) DGL_SWAP(x0, x1, int);
+		if(x1 > x2) DGL_SWAP(x1, x2, int);
+		if(x0 > x1) DGL_SWAP(x0, x1, int);
+		
+		// Draw horizontal line
+		for(int x = x0; x <= x2; ++x)
+			if(x >= 0 && x < (int)canvas->width)
+				DGL_SET_PIXEL(*canvas, x, y0, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y0)));
+		
+		return;
+	}
+	
+	// Completely degenerate vertical line triangle
+	if(x0 == x1 && x0 == x2){
+		// Vertical line out of the screen
+		if(x0 < 0 || x0 >= (int)canvas->width) return;
+		
+		// Force order y0 <= y1 <= y2
+		if(y0 > y1) DGL_SWAP(y0, y1, int);
+		if(y1 > y2) DGL_SWAP(y1, y2, int);
+		if(y0 > y1) DGL_SWAP(y0, y1, int);
+		
+		// Draw vertical line
+		for(int y = y0; y <= y2; ++y)
+			if(y >= 0 && y < (int)canvas->height)
+				DGL_SET_PIXEL(*canvas, x0, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x0, y)));
+		
+		return;
+	}
+	
+	// Since triangle primitive is frequent, we won't use sort3, but instead implement it directly
+	// Force first two rules
+	if(y0 > y1){
+		DGL_SWAP(y0, y1, int);
+		DGL_SWAP(x0, x1, int);
+	}
+	
+	if(y1 > y2){
+		DGL_SWAP(y1, y2, int);
+		DGL_SWAP(x1, x2, int);
+	}
+	
+	if(y0 > y1){
+		DGL_SWAP(y0, y1, int);
+		DGL_SWAP(x0, x1, int);
+	}
+	
+	int dy10 = y1 - y0;
+	int dx10 = x1 - x0;
+	int dy20 = y2 - y0;
+	int dx20 = x2 - x0;
+	int dy21 = y2 - y1;
+	int dx21 = x2 - x1;
+	
+	// Upper part of the triangle (bounded from below by horizontal line from (x1,y1) to line ((x0,y0),(x2,y2))
+
+	if(dy10 != 0 && dy20 != 0){
+		if(x1 > x0){
+			DGL_SWAP(dy10, dy20, int);
+			DGL_SWAP(dx10, dx20, int);
+		}
+	
+		for(int y = y0; y < y1; ++y)
+			if(y >= 0 && y < (int)canvas->height)
+				for(int x = dx10*(y-y0)/dy10 + x0; x <= dx20*(y-y0)/dy20 + x0; ++x)
+					if(x >= 0 && x < (int)canvas->width)
+						DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
+		
+		if(x1 > x0){
+			DGL_SWAP(dy10, dy20, int);
+			DGL_SWAP(dx10, dx20, int);
+		}
+	}
+	
+	// Lower part of the triangle (bounded from above by horizontal line from (x1,y1) to line ((x0,y0),(x2,y2))
+	if(dy21 != 0 && dy20 != 0){
+		int y1_temp = y1;
+		if(x1 > x0){
+			DGL_SWAP(dy21, dy20, int);
+			DGL_SWAP(dx21, dx20, int);
+			DGL_SWAP(y1, y0, int);
+			DGL_SWAP(x1, x0, int);
+		}
+	
+		for(int y = y1_temp; y < y2; ++y)
+			if(y >= 0 && y < (int)canvas->height)
+				for(int x = dx21*(y-y1)/dy21 + x1; x <= dx20*(y-y0)/dy20 + x0; ++x) 
+					if(x >= 0 && x < (int)canvas->width)
+						DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
+	}
+}
+
+// TODO: Move vertex color information into triangle
+// TODO: Feels like things can be optimized here, but it's not primary now
+// TODO: See how to adapt this code to SIMD
+// @Test It is roughly two times slower that other triangle filling function when using single color
+DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color c1, dgl_Color c2, dgl_Color c3){
+   	int x0 = DGL_TRANSFORM_COORDINATES_X(t.v[0].x);
+	int y0 = DGL_TRANSFORM_COORDINATES_Y(t.v[0].y, canvas->height);
+	int x1 = DGL_TRANSFORM_COORDINATES_X(t.v[1].x);
+	int y1 = DGL_TRANSFORM_COORDINATES_Y(t.v[1].y, canvas->height);
+	int x2 = DGL_TRANSFORM_COORDINATES_X(t.v[2].x);
+	int y2 = DGL_TRANSFORM_COORDINATES_Y(t.v[2].y, canvas->height);
+
+	// Find bounding box
+	int bl = dgl_min3(x0, x1, x2);
+	int br = dgl_max3(x0, x1, x2);
+	int bt = dgl_max3(y0, y1, y2);
+	int bb = dgl_min3(y0, y1, y2);
+
+	float denom = (y1-y2)*(x0-x2) + (x2-x1)*(y0-y2);
+	
+	// Fill based on barycentric coords
+	for(int y = bb; y <= bt; ++y)
+		if(y > 0 && y < (int)canvas->height)
+			for(int x = bl; x <= br; ++x)
+				if(x > 0 && x < (int)canvas->width){
+					float l1 = ((y1-y2)*(x-x2) + (x2-x1)*(y-y2)) / denom;
+					float l2 = ((y2-y0)*(x-x2) + (x0-x2)*(y-y2)) / denom;
+					//float l3 = 1 - l1 - l2;
+
+					if(0 <= l1 && l1 <= 1 && 0 <= l2 && l2 <= 1 && (l1+l2) <= 1)
+						DGL_SET_PIXEL(*canvas, x, y, dgl_blend(dgl_bary_color(l1, l2, c1, c2, c3), DGL_GET_PIXEL(*canvas, x, y)));
+				}
+}
+
+DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color){
+	// We don't need to transform coordinates because dgl_draw_line already does it
+
+	dgl_draw_line_bresenham(canvas, t.v[0].x, t.v[0].y, t.v[1].x, t.v[1].y, color);
+	dgl_draw_line_bresenham(canvas, t.v[0].x, t.v[0].y, t.v[2].x, t.v[2].y, color);
+	dgl_draw_line_bresenham(canvas, t.v[1].x, t.v[1].y, t.v[2].x, t.v[2].y, color);
+}
+
+DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color){
+	// Perspective projection
+	
+	// Orthogonal projection (seems to work)
+	dgl_Triangle2D pt;
+	pt.v[0].x = t.v[0].x;
+	pt.v[0].y = t.v[0].y;
+	pt.v[1].x = t.v[1].x;
+	pt.v[1].y = t.v[1].y;
+	pt.v[2].x = t.v[2].x;
+	pt.v[2].y = t.v[2].y;
+	//dgl_fill_triangle_2D(canvas, pt, color);
+	dgl_fill_triangle_bary_2D(canvas, pt, DGL_RED, DGL_GREEN, DGL_BLUE);
+}
+
 // TODO: For now, we are just doing orthogonal projection because it requires minimal calculation. Move to perspective projection
 // TODO: Maybe create projection screen type or something similar that will hold focus point and direction the screen is facing
 DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color){
@@ -1351,19 +1180,159 @@ DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl
 	//dgl_mat_free(v);
 }
 
-DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color){
-	// Perspective projection
+// TODO: Adapt this code, so it fits within specific mode of operation (like DGL_TARGET_WINDOWS)
+DGLAPI dgl_Errno dgl_render_ppm(dgl_Canvas *canvas, char *filename){
+	int DEFER_RESULT = 0;
 	
-	// Orthogonal projection (seems to work)
-	dgl_Triangle2D pt;
-	pt.v[0].x = t.v[0].x;
-	pt.v[0].y = t.v[0].y;
-	pt.v[1].x = t.v[1].x;
-	pt.v[1].y = t.v[1].y;
-	pt.v[2].x = t.v[2].x;
-	pt.v[2].y = t.v[2].y;
-	//dgl_fill_triangle_2D(canvas, pt, color);
-	dgl_fill_triangle_bary_2D(canvas, pt, DGL_RED, DGL_GREEN, DGL_BLUE);
+	FILE *file = fopen(filename, "wb");
+	if(file == NULL) return -1;
+	
+	fprintf(file, "P6\n%d %d\n255\n", (unsigned int)canvas->width, (unsigned int)canvas->height);
+	if(ferror(file)) DEFER_RETURN(errno);
+	
+	for(int i = 0; i < canvas->width*canvas->height; ++i){
+		fwrite(&canvas->pixels[i], sizeof(char), 3, file);
+		if(ferror(file)) DEFER_RETURN(errno);
+	}
+	
+DEFER:
+	fclose(file);
+	return DEFER_RESULT;
+}
+
+// TODO: We can also write our own functionality in the future (strtok is just dumb)
+// We can load models that contain triangles and quads, but not arbitrary faces (no need for now)
+#include <string.h>
+DGLAPI dgl_Simple_Model *dgl_load_simple_model(char *filename, dgl_Bool has_quads){
+	FILE *file = fopen(filename, "r");
+	if(file == NULL) return NULL;
+
+	dgl_Simple_Model *sm = (dgl_Simple_Model *)calloc(1, sizeof(dgl_Simple_Model));
+	// Just make space for one color that will be used and set it to white by default
+	sm->colors_length = 1;
+	sm->colors = (dgl_Color*)malloc(sizeof(dgl_Color));
+	sm->colors[0] = DGL_WHITE;
+
+	char line[100];
+	
+	// Go through file and see how many vertices and faces are there
+	while(fgets(line, 100, file)){
+		if(line[0] == 'v' && line[1] == ' ') ++(sm->vertices_length);
+		else if(line[0] == 'f') sm->indices_length += (3 + has_quads*3);
+	}
+
+	// Allocate space for vertices and indices in simple model
+	sm->vertices = (dgl_Point3D *)malloc(sizeof(dgl_Point3D) * sm->vertices_length);
+	sm->indices = (int *)malloc(sizeof(int) * sm->indices_length);
+	
+	rewind(file);
+
+   	// We are just looking for vertices and indices(faces)
+	int vertex_index = 0;
+	int index_index = 0;  // In the end, this also tells us how many indices we actually have
+	char *f1, *f2, *f3, *f4;
+	while(fgets(line, 100, file)){
+		if(line[0] == 'v' && line[1] == ' '){
+			// Take out 'v'
+			strtok(line, " ");
+
+			// For three vertex coordinates
+			sm->vertices[vertex_index].x = atof(strtok(NULL, " "));
+			sm->vertices[vertex_index].y = atof(strtok(NULL, " "));
+			sm->vertices[vertex_index].z = atof(strtok(NULL, " "));
+
+			++vertex_index;
+		}
+		else if(line[0] == 'f'){
+   			// Take out 'f'
+			strtok(line, " ");
+
+			// Temporarily save three parts of 'f' line
+			f1 = strtok(NULL, " ");
+			f2 = strtok(NULL, " ");
+			f3 = strtok(NULL, " ");
+			// For potential quad
+			f4 = strtok(NULL, " ");
+
+			// -1 because .obj file stores indices starting from 1
+   			sm->indices[index_index++] = atoi(strtok(f1, "/")) - 1;
+		   	sm->indices[index_index++] = atoi(strtok(f2, "/")) - 1;
+   			sm->indices[index_index++] = atoi(strtok(f3, "/")) - 1;
+
+			// If face is a quad then form additional triangle
+			if(has_quads && f4 != NULL && f4[0] != '\n'){
+				sm->indices[index_index++] = atoi(f1) - 1;
+				sm->indices[index_index++] = atoi(f3) - 1;
+				sm->indices[index_index++] = atoi(strtok(f4, "/")) - 1;
+			}
+		}
+	}
+	
+	// Reallocate indices by using malloc and memcpy since we know exact size (realloc is too slow for this)
+	int *temp = (int *)calloc(index_index, sizeof(int));
+	memcpy(temp, sm->indices, sizeof(int) * index_index);
+	free(sm->indices);
+	sm->indices_length = index_index;
+	sm->indices = temp;
+	
+	fclose(file);
+	return sm;
+}
+
+// TODO: Create function that will take model and reduce number of triangles but still keep
+// the mesh connected (decimation algorithm)
+DGLAPI int dgl_save_simple_model(dgl_Simple_Model *sm, char *filename){
+	int DEFER_RESULT = 0;
+	
+	FILE *file = fopen(filename, "w");
+	if(file == NULL) return -1;
+
+	fprintf(file, "# Dgl Simple Model [vertices: %d, indices: %d]\n", sm->vertices_length, sm->indices_length);
+
+	for(size_t i = 0; i < sm->vertices_length; ++i){
+		fprintf(file, "v %lf %lf %lf\n", sm->vertices[i].x, sm->vertices[i].y, sm->vertices[i].z);
+		if(ferror(file)) DEFER_RETURN(errno);
+	}
+
+	for(size_t i = 0; i < sm->indices_length; i += 3){
+		// Add 1 because .obj uses indexing from 1
+		fprintf(file, "f %d %d %d\n", sm->indices[i] + 1, sm->indices[i+1] + 1, sm->indices[i+2] + 1);
+		if(ferror(file)) DEFER_RETURN(errno);
+	}
+
+DEFER:
+	fclose(file);
+	return DEFER_RESULT;
+}
+
+DGLAPI void dgl_delete_simple_model(dgl_Simple_Model *sm){
+	free(sm->vertices);
+	free(sm->indices);
+	free(sm->colors);
+	free(sm);
+}
+
+// This is a very forceful way to reduce model complexity (by making it disconnected)
+// The reason it works is that removal of triangles will roughly be uniform because of how
+// locally close triangles are defined locally close in files
+DGLAPI dgl_Simple_Model *dgl_cull_reduce_simple_model(dgl_Simple_Model *sm, int stride){
+	int temp_length = sm->indices_length/stride;
+	int *temp = (int *)malloc(sizeof(int)*temp_length);
+
+	int temp_index = 0;
+	for(size_t i = 0; i < sm->indices_length/3 && temp_index < temp_length - 2; ++i){
+		if(i % stride == 0){
+			temp[temp_index++] = sm->indices[i*3];
+			temp[temp_index++] = sm->indices[i*3 + 1];
+			temp[temp_index++] = sm->indices[i*3 + 2];
+		}
+	}
+
+	free(sm->indices);
+	sm->indices_length /= stride;
+	sm->indices = temp;
+
+	return sm;
 }
 
 // Currently, there is no checking which triangles are further away
@@ -1408,136 +1377,34 @@ DGLAPI void dgl_rotate_simple_model(dgl_Simple_Model *sm, dgl_Real angle_x, dgl_
 		dgl_rotate_point_3D(&(sm->vertices[i]), angle_x, angle_y, angle_z);
 }
 
+DGLAPI void dgl_scale_point_2D(dgl_Point2D *p, int scale){ p->x *= scale; p->y *= scale; }
+DGLAPI void dgl_scale_point_3D(dgl_Point3D *p, dgl_Real scale){ p->x *= scale; p->y *= scale; p->z *= scale; }
+DGLAPI void dgl_translate_point_2D(dgl_Point2D *p, dgl_Point2D t){ p->x += t.x; p->y += t.y; }
+DGLAPI void dgl_translate_point_3D(dgl_Point3D *p, dgl_Point3D t){ p->x += t.x; p->y += t.y; p->z += t.z; }
 
-DGLAPI dgl_Mat dgl_mat_alloc(int height, int width){
-	dgl_Mat m = {0};
-	m.cells = calloc(height*width, sizeof(dgl_Real));
-	m.height = height;
-	m.width = width;
-	return m;
+// TODO: Rotation like this is of course not the best way but will do for now
+DGLAPI void dgl_rotate_point_2D(dgl_Point2D *p, dgl_Real angle){
+	dgl_Point2D tp = (*p);
+	p->x = cos(angle)*tp.x - sin(angle)*tp.y;
+	p->y = sin(angle)*tp.x + cos(angle)*tp.y;
 }
-
-DGLAPI void dgl_mat_free(dgl_Mat m){
-	free(m.cells);
-}
-
-DGLAPI void dgl_mat_scale_mut(dgl_Mat m, dgl_Real s){
-	for(int i = 0; i < m.width*m.height; ++i)
-		m.cells[i] *= s;
-}
-
-DGLAPI void dgl_mat_add_mut(dgl_Mat m1, dgl_Mat m2){
-	if(m1.height == m2.height && m1.width == m2.width)
-		for(int i = 0; i < m1.width*m1.height; ++i)
-			m1.cells[i] += m2.cells[i];
-}
-
-// TODO: Change this for cache
-DGLAPI dgl_Mat dgl_mat_mul_mut(dgl_Mat m1, dgl_Mat m2){
-	dgl_Mat m = {0};
-	/*
-	if(m1.width == m2.height){
-		m = dgl_mat_alloc(m1.height, m2.width);
-		
-		for(int i = 0; i < m1.height; ++i){
-			for(int j = 0; j < m2.width; ++j){
-				for(int k = 0; k < m1.width; ++k){
-					m.cells[i*m.width + j] += m1.cells[i*m1.width + k]*m2.cells[k*m2.width + j];
-				}					
-			}
-		} 
-	}
-	*/
-
-	return m;
-}
-
-// TODO: Delete this in the future since it is just for testing
-DGLAPI void dgl_mat_print(dgl_Mat m){
-	for(int i = 0; i < m.height; ++i){
-		for(int j = 0; j < m.width; ++j){
-			printf("%f ", m.cells[i*m.width + j]);
-		}
-		printf("\n");
-	}
-}
-
-DGLAPI void dgl_mat4_add(dgl_Mat4 m1, dgl_Mat4 m2){}
-
-DGLAPI void dgl_mat4_compose(dgl_Mat4 m1, dgl_Mat4 m2){
-	dgl_Mat4 temp;
-	memcpy(temp, m1, 64);
+DGLAPI void dgl_rotate_point_3D(dgl_Point3D *p, dgl_Real angle_x, dgl_Real angle_y, dgl_Real angle_z){
+	dgl_Real sin_x = sin(angle_x);
+	dgl_Real cos_x = cos(angle_x);
+	dgl_Real sin_y = sin(angle_y);
+	dgl_Real cos_y = cos(angle_y);
+	dgl_Real sin_z = sin(angle_z);
+	dgl_Real cos_z = cos(angle_z);
 	
-	for(int i = 0; i < 4; ++i){
-		for(int j = 0; j < 4; ++j){
-			for(int k = 0; k < 4; ++k){
-				m1[i*4 + j] += temp[i*4 + k] * m2[k*4 + j];
-			}					
-		}
-	}
-}
-// 
-// dgl_Vec dgl_mat4_apply(dgl_Mat4 m, dgl_Vec4 v){
-// 
-// }
-
-DGLAPI void dgl_init_proj_params(float fov_deg, float aspect_ratio, dgl_Real *l, dgl_Real *r, dgl_Real *t, dgl_Real *b, dgl_Real n, dgl_Real f){
-	(*t) = n * tanf(fov_deg * 0.5 * DGL_PI / 180);
-	(*b) = -(*t);
-	(*r) = aspect_ratio * (*t);
-	(*l) = -(*r);
-}
-
-// These params are initialized by specifying FOV and aspect-ratio
-DGLAPI dgl_Mat dgl_mat_get_proj(dgl_Real l, dgl_Real r, dgl_Real t, dgl_Real b, dgl_Real n, dgl_Real f){
-	dgl_Mat m = dgl_mat_alloc(4, 4);
-
-	// This is OpenGL projection matrix
-	m.cells[0]  = 2*n/(r-l);
-	m.cells[2]  = (r+l)/(r-l);
-	m.cells[5]  = 2*n/(t-b);
-	m.cells[6]  = (t+b)/(t-b);
-	m.cells[10] = -(f+n)/(f-n);
-	m.cells[11] = -2*f*n/(f-n);
-	m.cells[14] = -1;
-	
-	return m;
-}
-
-DGLAPI dgl_Color dgl_blend(dgl_Color f, dgl_Color b){
-	// These were used in dgl_Real arithmetic
-	// dgl_Color alpha 	= (dgl_Color)((a1    +    a2*(1-a1))*255);
-	// dgl_Color red 	= (dgl_Color)((a1*r1 + r2*a2*(1-a1))*255);
-	// dgl_Color green 	= (dgl_Color)((a1*g1 + g2*a2*(1-a1))*255);
-	// dgl_Color blue 	= (dgl_Color)((a1*b1 + b2*a2*(1-a1))*255);
-
-	// Conversion to integer arithmetic below
-	uint8_t a1 = ((f >> 24) & 0xFF);
-	uint8_t a2 = ((b >> 24) & 0xFF);
-		
-	uint8_t r1 = (f & 0xFF);
-	uint8_t r2 = (b & 0xFF);
-		
-	uint8_t g1 = ((f >> 8) & 0xFF);
-	uint8_t g2 = ((b >> 8) & 0xFF);
-		
-	uint8_t b1 = ((f >> 16) & 0xFF);
-	uint8_t b2 = ((b >> 16) & 0xFF);
-
-	// TODO: Check if it is faster to precompute these shared parts
-	// (maybe not if the compiler does is silently)
-	// uint16_t t1 = 255*a1;
-	// uint16_t t2 = (255-a1)*a2;
-
-	// Instead of dividing by 65025 or 255, we accept the error and approximate it with shift
-	// I feel like error can be adjusted by a constant factor so that we still cover the whole color range
-	// after this step
-	uint8_t red   = (255*a1*r1 + (255-a1)*a2*r2) >> 16;
-	uint8_t green = (255*a1*g1 + (255-a1)*a2*g2) >> 16;
-	uint8_t blue  = (255*a1*b1 + (255-a1)*a2*b2) >> 16;
-	uint8_t alpha = (255*a1    + (255-a1)*a2   ) >> 8;
-	  	
-	return (alpha << 24) | (blue << 16) | (green << 8) | red;
+	dgl_Point3D tp = (*p);
+	p->y = cos_x*tp.y - sin_x*tp.z;
+	p->z = sin_x*tp.y + cos_x*tp.z;
+	tp = (*p);
+	p->x =  cos_y*tp.x + sin_y*tp.z;
+	p->z = -sin_y*tp.x + cos_y*tp.z;
+	tp = (*p);
+	p->x = cos_z*tp.x - sin_z*tp.y;
+	p->y = sin_z*tp.x + cos_z*tp.y;
 }
 
 DGLAPI inline dgl_V3 dgl_v3_add(dgl_V3 v1, dgl_V3 v2){
@@ -1630,6 +1497,48 @@ DGLAPI int dgl_max3(int a, int b, int c){
 	}
 }
 
+DGLAPI int dgl_clamp(int v, int left, int right){
+	if(v < left) return left;
+	if(v > right) return right;
+	return v;
+}
+
+DGLAPI dgl_Color dgl_blend(dgl_Color f, dgl_Color b){
+	// These were used in dgl_Real arithmetic
+	// dgl_Color alpha 	= (dgl_Color)((a1    +    a2*(1-a1))*255);
+	// dgl_Color red 	= (dgl_Color)((a1*r1 + r2*a2*(1-a1))*255);
+	// dgl_Color green 	= (dgl_Color)((a1*g1 + g2*a2*(1-a1))*255);
+	// dgl_Color blue 	= (dgl_Color)((a1*b1 + b2*a2*(1-a1))*255);
+
+	// Conversion to integer arithmetic below
+	uint8_t a1 = ((f >> 24) & 0xFF);
+	uint8_t a2 = ((b >> 24) & 0xFF);
+		
+	uint8_t r1 = (f & 0xFF);
+	uint8_t r2 = (b & 0xFF);
+		
+	uint8_t g1 = ((f >> 8) & 0xFF);
+	uint8_t g2 = ((b >> 8) & 0xFF);
+		
+	uint8_t b1 = ((f >> 16) & 0xFF);
+	uint8_t b2 = ((b >> 16) & 0xFF);
+
+	// TODO: Check if it is faster to precompute these shared parts
+	// (maybe not if the compiler does is silently)
+	// uint16_t t1 = 255*a1;
+	// uint16_t t2 = (255-a1)*a2;
+
+	// Instead of dividing by 65025 or 255, we accept the error and approximate it with shift
+	// I feel like error can be adjusted by a constant factor so that we still cover the whole color range
+	// after this step
+	uint8_t red   = (255*a1*r1 + (255-a1)*a2*r2) >> 16;
+	uint8_t green = (255*a1*g1 + (255-a1)*a2*g2) >> 16;
+	uint8_t blue  = (255*a1*b1 + (255-a1)*a2*b2) >> 16;
+	uint8_t alpha = (255*a1    + (255-a1)*a2   ) >> 8;
+	  	
+	return (alpha << 24) | (blue << 16) | (green << 8) | red;
+}
+
 DGLAPI dgl_Color dgl_bary_color(float s, float t, dgl_Color c1, dgl_Color c2, dgl_Color c3){
 	dgl_Color a = DGL_SCALE_RGB(s, c1);
 	dgl_Color b = DGL_SCALE_RGB(t, c2);
@@ -1637,19 +1546,39 @@ DGLAPI dgl_Color dgl_bary_color(float s, float t, dgl_Color c1, dgl_Color c2, dg
 	return DGL_SUM_RGB(DGL_SUM_RGB(a, b), c);
 }
 
-DGLAPI int dgl_clamp(int v, int left, int right){
-	if(v < left) return left;
-	if(v > right) return right;
-	return v;
+DGLAPI dgl_Mat dgl_mat_alloc(int height, int width){
+	dgl_Mat m = {0};
+	m.cells = calloc(height*width, sizeof(dgl_Real));
+	m.height = height;
+	m.width = width;
+	return m;
 }
 
-DGLAPI inline dgl_Color DGL_RGBA_TO_BGRA(dgl_Color v){
-	uint8_t t = v & 0xFF;
-	v &= 0xFFFFFF00;
-	v |= ((v & 0x00FF0000) >> 16);
-	v &= 0xFF00FFFF;
-	v |= (t << 16);
-	return v;
+DGLAPI void dgl_mat_free(dgl_Mat m){
+	free(m.cells);
+}
+
+DGLAPI void dgl_init_proj_params(float fov_deg, float aspect_ratio, dgl_Real *l, dgl_Real *r, dgl_Real *t, dgl_Real *b, dgl_Real n, dgl_Real f){
+	(*t) = n * tanf(fov_deg * 0.5 * DGL_PI / 180);
+	(*b) = -(*t);
+	(*r) = aspect_ratio * (*t);
+	(*l) = -(*r);
+}
+
+// These params are initialized by specifying FOV and aspect-ratio
+DGLAPI dgl_Mat dgl_mat_get_proj(dgl_Real l, dgl_Real r, dgl_Real t, dgl_Real b, dgl_Real n, dgl_Real f){
+	dgl_Mat m = dgl_mat_alloc(4, 4);
+
+	// This is OpenGL projection matrix
+	m.cells[0]  = 2*n/(r-l);
+	m.cells[2]  = (r+l)/(r-l);
+	m.cells[5]  = 2*n/(t-b);
+	m.cells[6]  = (t+b)/(t-b);
+	m.cells[10] = -(f+n)/(f-n);
+	m.cells[11] = -2*f*n/(f-n);
+	m.cells[14] = -1;
+	
+	return m;
 }
 
 #endif // DGL_IMPLEMENTATION
