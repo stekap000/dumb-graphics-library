@@ -714,7 +714,7 @@ DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size
 	int top_left_y = center_y - r;
 	int top_left_x = center_x - r;
 	for(size_t y = 0; y < 2*r; ++y)
-		if(!(top_left_y + (int)y < 0) && !(top_left_y + (int)y >= (int)canvas->height))
+		if(top_left_y + (int)y >= 0 && top_left_y + (int)y < (int)canvas->height)
 			for(size_t x = 0; x < 2*r; ++x)
 				if(!(top_left_x + (int)x < 0) && !(top_left_x + (int)x >= (int)canvas->width)){
 					// For now we are just doing anti-aliasing with uniform subpixels whose
@@ -778,7 +778,7 @@ DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size
 	int top_left_x = center_x - r;
 
 	for(size_t y = 0; y < 2*r; ++y) {
-		if(!(top_left_y + (int)y < 0) && !(top_left_y + (int)y >= (int)canvas->height)){
+		if(top_left_y + (int)y >= 0 && top_left_y + (int)y < (int)canvas->height){
 			for(size_t x = 0; x < 2*r; ++x) {
 				if(!(top_left_x + (int)x < 0) && !(top_left_x + (int)x >= (int)canvas->width)){
 					int pxl = top_left_x + x - center_x;
