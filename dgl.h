@@ -41,11 +41,6 @@
 #include <errno.h>  // TODO: Remove in the future. We can do without this
 #include <math.h>
 
-// TODO: Maybe support explicit simd for some operations in the future.
-#ifdef DGL_USE_SIMD
-#include <immintrin.h>
-#endif
-
 // TODO: Add inclusion for C++
 
 #define DGL_PI 3.14159265358
@@ -116,11 +111,6 @@
 
 #define DGL_DEFAULT_FONT_WIDTH		6
 #define DGL_DEFAULT_FONT_HEIGHT		7
-
-#ifdef DGL_USE_SIMD
-typedef union { __m128 v; float s[4]; } dgl_M128;
-typedef union { __m128i v; int s[4]; } dgl_M128i;
-#endif
 
 typedef enum { false, true } dgl_Bool;
 typedef float dgl_Real; // This is because we can use it to easily change precision
