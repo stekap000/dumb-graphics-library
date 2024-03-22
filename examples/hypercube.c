@@ -6,101 +6,153 @@
 #define POINTS_NUM 16
 #define HYPERCUBE_FACES_NUM 24
 
-dgl_Real hypercube_vertices[POINTS_NUM * 4] = {
-	0, 0, 0, 0, // 0
-	1, 0, 0, 0,	// 1
-	0, 1, 0, 0,	// 2
-	1, 1, 0, 0,	// 3
-	0, 0, 1, 0,	// 4
-	1, 0, 1, 0,	// 5
-	0, 1, 1, 0,	// 6
-	1, 1, 1, 0,	// 7
-	0, 0, 0, 1,	// 8
-	1, 0, 0, 1,	// 9
-	0, 1, 0, 1,	// 10
-	1, 1, 0, 1,	// 11
-	0, 0, 1, 1,	// 12
-	1, 0, 1, 1,	// 13
-	0, 1, 1, 1,	// 14
-	1, 1, 1, 1  // 15
+dgl_Real hypercube_vertices[] = {
+	0, 0, 0, 0, //  0
+	0, 0, 0, 1, //  1
+	0, 0, 1, 0, //  2
+	0, 0, 1, 1, //  3
+	0, 1, 0, 0, //  4
+	0, 1, 0, 1, //  5
+	0, 1, 1, 0, //  6
+	0, 1, 1, 1, //  7
+	1, 0, 0, 0, //  8
+	1, 0, 0, 1, //  9
+	1, 0, 1, 0, // 10
+	1, 0, 1, 1, // 11
+	1, 1, 0, 0, // 12
+	1, 1, 0, 1, // 13
+	1, 1, 1, 0, // 14
+	1, 1, 1, 1, // 15
 };
 
 int hypercube_indices[] = {
-	0, 1, 2,  // 0
-	0, 1, 4,  // 1
-	0, 1, 8,  // 2
-	0, 1, 3,  // 3
-	0, 1, 5,  // 4
-	0, 1, 9,  // 5
-	0, 2, 4,  // 6
-	0, 2, 8,  // 7
-	0, 2, 3,  // 8
-	0, 2, 6,  // 9
-	0, 2, 10, // 10
-	0, 4, 8,  // 11
-	0, 4, 5,  // 12
-	0, 4, 6,  // 13
-	0, 4, 12, // 14
-	0, 8, 9,  // 15
-	0, 8, 10, // 16
-	0, 8, 12, // 17
-	1, 2, 3,  // 18
-	1, 2, 4,  // 19
-	1, 2, 5,  // 20
-	1, 2, 8,  // 21
-	1, 2, 9,  // 22
-	1, 2, 6,  // 23
-	1, 2, 10, // 24
-	1, 4, 3,  // 25
-	1, 4, 5,  // 26
-	1, 4, 8,  // 27
-	1, 4, 9,  // 28
-	1, 4, 6,  // 29
-	1, 4, 12, // 30
-	1, 8, 3,  // 31
-	1, 8, 5,  // 32
-	1, 8, 9,  // 33
-	1, 8, 10, // 34
-	1, 8, 12, // 35
-	1, 3, 5,  // 36
-	1, 3, 9,  // 37
-	1, 3, 7,  // 38
-	1, 3, 11, // 39
-	1, 3, 11, // 39
-	1, 3, 11, // 39
+	0, 8, 4,
+	0, 8, 2,
+	0, 8, 1,
+	0, 4, 2,
+	0, 4, 1,
+	0, 2, 1,
+	8, 0, 12,
+	8, 0, 10,
+	8, 0, 9,
+	8, 12, 10,
+	8, 12, 9,
+	8, 10, 9,
+	4, 12, 0,
+	4, 12, 6,
+	4, 12, 5,
+	4, 0, 6,
+	4, 0, 5,
+	4, 6, 5,
+	12, 4, 8,
+	12, 4, 14,
+	12, 4, 13,
+	12, 8, 14,
+	12, 8, 13,
+	12, 14, 13,
+	2, 10, 6,
+	2, 10, 0,
+	2, 10, 3,
+	2, 6, 0,
+	2, 6, 3,
+	2, 0, 3,
+	10, 2, 14,
+	10, 2, 8,
+	10, 2, 11,
+	10, 14, 8,
+	10, 14, 11,
+	10, 8, 11,
+	6, 14, 2,
+	6, 14, 4,
+	6, 14, 7,
+	6, 2, 4,
+	6, 2, 7,
+	6, 4, 7,
+	14, 6, 10,
+	14, 6, 12,
+	14, 6, 15,
+	14, 10, 12,
+	14, 10, 15,
+	14, 12, 15,
+	1, 9, 5,
+	1, 9, 3,
+	1, 9, 0,
+	1, 5, 3,
+	1, 5, 0,
+	1, 3, 0,
+	9, 1, 13,
+	9, 1, 11,
+	9, 1, 8,
+	9, 13, 11,
+	9, 13, 8,
+	9, 11, 8,
+	5, 13, 1,
+	5, 13, 7,
+	5, 13, 4,
+	5, 1, 7,
+	5, 1, 4,
+	5, 7, 4,
+	13, 5, 9,
+	13, 5, 15,
+	13, 5, 12,
+	13, 9, 15,
+	13, 9, 12,
+	13, 15, 12,
+	3, 11, 7,
+	3, 11, 1,
+	3, 11, 2,
+	3, 7, 1,
+	3, 7, 2,
+	3, 1, 2,
+	11, 3, 15,
+	11, 3, 9,
+	11, 3, 10,
+	11, 15, 9,
+	11, 15, 10,
+	11, 9, 10,
+	7, 15, 3,
+	7, 15, 5,
+	7, 15, 6,
+	7, 3, 5,
+	7, 3, 6,
+	7, 5, 6,
+	15, 7, 11,
+	15, 7, 13,
+	15, 7, 14,
+	15, 11, 13,
+	15, 11, 14,
+	15, 13, 14,
 };
-
-//	0, 0, 0, 0, // 0
-//	1, 0, 0, 0,	// 1
-//	0, 1, 0, 0,	// 2
-//	1, 1, 0, 0,	// 3
-//	0, 0, 1, 0,	// 4
-//	1, 0, 1, 0,	// 5
-//	0, 1, 1, 0,	// 6
-//	1, 1, 1, 0,	// 7
-//	0, 0, 0, 1,	// 8
-//	1, 0, 0, 1,	// 9
-//	0, 1, 0, 1,	// 10
-//	1, 1, 0, 1,	// 11
-//	0, 0, 1, 1,	// 12
-//	1, 0, 1, 1,	// 13
-//	0, 1, 1, 1,	// 14
-//	1, 1, 1, 1  // 15
 
 dgl_Point3D hypercube_vertices_3D[POINTS_NUM] = {0};
 
-void rotate_4D(float angle, float dt) {
+void rotate_hypercube_4D(float angle, float dt) {
 	// Rotation in yz plane.
-	
 	for(int i = 0; i < POINTS_NUM; ++i) {
 		float x = hypercube_vertices[i*4];
-		float y = hypercube_vertices[i*4+1];
-		float z = hypercube_vertices[i*4+2];
 		float w = hypercube_vertices[i*4+3];
 
 		hypercube_vertices[i*4] = cos(angle*dt)*x - sin(angle*dt)*w;
 		hypercube_vertices[i*4+3] = sin(angle*dt)*x + cos(angle*dt)*w;
 	}
+
+	// Rotation in xw plane.
+	for(int i = 0; i < POINTS_NUM; ++i) {
+		float y = hypercube_vertices[i*4+1];
+		float z = hypercube_vertices[i*4+2];
+
+		hypercube_vertices[i*4+1] = cos(angle*dt)*y - sin(angle*dt)*z;
+		hypercube_vertices[i*4+2] = sin(angle*dt)*y + cos(angle*dt)*z;
+	}
+
+	// Rotation in xy plane.
+	//for(int i = 0; i < POINTS_NUM; ++i) {
+	//	float y = hypercube_vertices[i*4+1];
+	//	float z = hypercube_vertices[i*4+2];
+	//
+	//	hypercube_vertices[i*4+1] = cos(angle*dt)*y - sin(angle*dt)*z;
+	//	hypercube_vertices[i*4+3] = sin(angle*dt)*y + cos(angle*dt)*z;
+	//}
 }
 
 void project_to_3D() {
@@ -118,22 +170,22 @@ dgl_Simple_Model sm = {
 	.indices = hypercube_indices,
 	.colors = colors,
 	.vertices_length = POINTS_NUM,
-	.indices_length = 42,
+	.indices_length = 96,
 	.colors_length = 1
 };
 
 void init() {
-	init_window_params(500, 500);
+	init_window_params(600, 600);
 	init_fps(-1);
 }
 
 void start() {}
 
 void update(float dt) {
-	rotate_4D(2, dt);
+	rotate_hypercube_4D(1, dt);
 	project_to_3D();
-	dgl_scale_simple_model(&sm, 200.0f);
-	dgl_translate_simple_model(&sm, (dgl_Point3D){.x = 150, .y = 150, .z = 0});
+	dgl_scale_simple_model(&sm, 160.0f);
+	dgl_translate_simple_model(&sm, (dgl_Point3D){.x = 300, .y = 300, .z = 0});
 	dgl_draw_simple_model_mesh(&window.canvas, &sm, (dgl_Mat){0});
 }
 
