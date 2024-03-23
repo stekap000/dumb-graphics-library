@@ -4,7 +4,10 @@
 #include "dgl.h"
 
 #define POINTS_NUM 16
-#define HYPERCUBE_FACES_NUM 24
+#define FACES_NUM 24
+
+// Vertices and indices values are generated using my program from
+// tesseract-generator repository.
 
 dgl_Real hypercube_vertices[] = {
 	0, 0, 0, 0, //  0
@@ -25,7 +28,8 @@ dgl_Real hypercube_vertices[] = {
 	1, 1, 1, 1, // 15
 };
 
-int hypercube_indices[] = {
+// Indices form 4 triangles per face of hypercube.
+int hypercube_indices[96*3] = {
 	0, 8, 4,
 	0, 8, 2,
 	0, 8, 1,
@@ -126,6 +130,7 @@ int hypercube_indices[] = {
 
 dgl_Point3D hypercube_vertices_3D[POINTS_NUM] = {0};
 
+// This is arbitrary rotation that I just found to be interesting when rendered.
 void rotate_hypercube_4D(float angle, float dt) {
 	// Rotation in yz plane.
 	for(int i = 0; i < POINTS_NUM; ++i) {
@@ -140,23 +145,23 @@ void rotate_hypercube_4D(float angle, float dt) {
 	for(int i = 0; i < POINTS_NUM; ++i) {
 		float y = hypercube_vertices[i*4+1];
 		float z = hypercube_vertices[i*4+2];
-
+	
 		hypercube_vertices[i*4+1] = cos(angle*dt)*y - sin(angle*dt)*z;
 		hypercube_vertices[i*4+2] = sin(angle*dt)*y + cos(angle*dt)*z;
 	}
 
 	// Rotation in xy plane.
-	//for(int i = 0; i < POINTS_NUM; ++i) {
-	//	float y = hypercube_vertices[i*4+1];
-	//	float z = hypercube_vertices[i*4+2];
-	//
-	//	hypercube_vertices[i*4+1] = cos(angle*dt)*y - sin(angle*dt)*z;
-	//	hypercube_vertices[i*4+3] = sin(angle*dt)*y + cos(angle*dt)*z;
-	//}
+	for(int i = 0; i < POINTS_NUM; ++i) {
+		float z = hypercube_vertices[i*4+2];
+		float w = hypercube_vertices[i*4+3];
+	
+		hypercube_vertices[i*4+2] = cos(angle*dt)*z - sin(angle*dt)*w;
+		hypercube_vertices[i*4+3] = sin(angle*dt)*z + cos(angle*dt)*w;
+	}
 }
 
+// Orthogonal projection.
 void project_to_3D() {
-	// Orthogonal projection.
 	for(int i = 0; i < POINTS_NUM; ++i) {
 		hypercube_vertices_3D[i].x = hypercube_vertices[i*4];
 		hypercube_vertices_3D[i].y = hypercube_vertices[i*4+1];
@@ -164,28 +169,31 @@ void project_to_3D() {
 	}
 }
 
-dgl_Color colors[1] = { DGL_GREEN };
+dgl_Color colors[1] = {
+	DGL_RGBA(0, 255, 0, 130),
+};
 dgl_Simple_Model sm = {
 	.vertices = hypercube_vertices_3D,
 	.indices = hypercube_indices,
 	.colors = colors,
 	.vertices_length = POINTS_NUM,
-	.indices_length = 96,
+	// 4 triangles per face and 3 points per triangle.
+	.indices_length = FACES_NUM*4*3,
 	.colors_length = 1
 };
 
 void init() {
-	init_window_params(600, 600);
+	init_window_params(800, 800);
 	init_fps(-1);
 }
 
 void start() {}
 
 void update(float dt) {
-	rotate_hypercube_4D(1, dt);
+	rotate_hypercube_4D(0.5, dt);
 	project_to_3D();
-	dgl_scale_simple_model(&sm, 160.0f);
-	dgl_translate_simple_model(&sm, (dgl_Point3D){.x = 300, .y = 300, .z = 0});
+	dgl_scale_simple_model(&sm, 250.0f);
+	dgl_translate_simple_model(&sm, (dgl_Point3D){.x = 400, .y = 400, .z = 0});
 	dgl_draw_simple_model_mesh(&window.canvas, &sm, (dgl_Mat){0});
 }
 
