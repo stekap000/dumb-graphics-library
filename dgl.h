@@ -41,6 +41,9 @@
 #include <errno.h>  // TODO: Remove in the future. We can do without this
 #include <math.h>
 
+#include <assert.h>
+#define DGL_NOT_IMPLEMENTED(msg) (assert(!msg))
+
 // TODO: Add inclusion for C++
 
 #define DGL_PI 3.14159265358
@@ -109,6 +112,9 @@
 #define DGL_GET_PIXEL(canvas, x, y) (canvas).pixels[(y)*(canvas).stride + (x)]
 #define DGL_SET_PIXEL(canvas, x, y, v) (canvas).pixels[(y)*(canvas).stride + (x)] = (v)
 
+#define DGL_GET_Z_INDEX(canvas, x, y) (canvas).z_indices[(y)*(canvas).stride + (x)]
+#define DGL_SET_Z_INDEX(canvas, x, y, v) (canvas).z_indices[(y)*(canvas).stride + (x)] = (v)
+
 #define DGL_DEFAULT_FONT_WIDTH		6
 #define DGL_DEFAULT_FONT_HEIGHT		7
 
@@ -156,6 +162,7 @@ typedef struct{
 // This is useful since it allows us to operate only on one portion of pixels (for example use dgl_clear just on one portion)
 typedef struct{
 	dgl_Color *pixels;
+	int *z_indices;
 	int width;
 	int height;
 	int stride;
@@ -170,6 +177,8 @@ typedef struct{
 DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color);
 DGLAPI dgl_Color dgl_read_pixel(dgl_Canvas *canvas, int x, int y);
 DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, dgl_Color color);
+DGLAPI int dgl_read_z_index(dgl_Canvas *canvas, int x, int y);
+DGLAPI void dgl_fill_z_index(dgl_Canvas *canvas, int x, int y, int z_index);
 DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, dgl_Color color);
 DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, dgl_Color color);
 DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, dgl_Color color);
@@ -640,6 +649,14 @@ DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, dgl_Color color) {
 		dgl_Color c = dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y));
 		DGL_SET_PIXEL(*canvas, x, y, c);
 	}
+}
+
+DGLAPI int dgl_read_z_index(dgl_Canvas *canvas, int x, int y) {
+	DGL_NOT_IMPLEMENTED("");
+}
+
+DGLAPI void dgl_fill_z_index(dgl_Canvas *canvas, int x, int y, int z_index) {
+	DGL_NOT_IMPLEMENTED("");
 }
 
 DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, dgl_Color color){
