@@ -47,6 +47,7 @@
 // TODO: Add inclusion for C++
 
 #define DGL_PI 3.14159265358
+#define DGL_MAX_DISTANCE -1000000000
 
 #define DEFER_RETURN(v) do { DEFER_RESULT=v; goto DEFER; } while(0)
 
@@ -162,7 +163,7 @@ typedef struct{
 // This is useful since it allows us to operate only on one portion of pixels (for example use dgl_clear just on one portion)
 typedef struct{
 	dgl_Color *pixels;
-	int *z_indices;
+	dgl_Real *z_indices;
 	int width;
 	int height;
 	int stride;
@@ -174,6 +175,7 @@ typedef struct{
 	char *glyphs;			// This allows us to iterate through 3D matrix character by character
 } dgl_Font;
 
+DGLAPI dgl_Canvas dgl_create_canvas(int width, int height);
 DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color);
 DGLAPI dgl_Color dgl_read_pixel(dgl_Canvas *canvas, int x, int y);
 DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, dgl_Color color);
@@ -628,6 +630,21 @@ dgl_Font dgl_default_font = {
 
 #ifdef DGL_IMPLEMENTATION
 
+dgl_Canvas dgl_create_canvas(int width, int height) {
+	assert(width > 0 && height > 0);
+	
+	dgl_Canvas canvas = {0};
+	canvas.pixels = calloc(width * height, sizeof(dgl_Color));
+	
+	canvas.z_indices = calloc(width * height, sizeof(dgl_Real));
+	for(int i = 0; i < width * height; ++i) canvas.z_indices[i] = DGL_MAX_DISTANCE;
+	
+	canvas.width = width;
+	canvas.height = height;
+	canvas.stride = width;
+	return canvas;
+}
+
 DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color){
 	for(int y = 0; y < canvas->height; ++y)
 		for(int x = 0; x < canvas->width; ++x)
@@ -696,7 +713,7 @@ DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int x0, int y0, size_t w, size_t h
 	for(int y = y0; y < y0 + (int)h; ++y)
 		if(y >= 0 && y < (int)canvas->height)
 			for(int x = x0; x < x0 + (int)w; ++x)
-				if(x >= 0 && x < (int)canvas->width)
+				if(x >= 0 && x < (int)canvas->width) 
 					DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 }
 
@@ -1135,6 +1152,7 @@ DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl
 	pt.v[1].y = t.v[1].y;
 	pt.v[2].x = t.v[2].x;
 	pt.v[2].y = t.v[2].y;
+
 	//dgl_fill_triangle_2D(canvas, pt, color);
 	dgl_fill_triangle_bary_2D(canvas, pt, DGL_RED, DGL_GREEN, DGL_BLUE);
 }
@@ -1667,16 +1685,21 @@ void _windows_init(){
 
 	if(window.width <= 0) window.width = DEFAULT_WINDOW_WIDTH;
 	if(window.height <= 0) window.height = DEFAULT_WINDOW_HEIGHT;
-		
-	window.canvas.pixels = calloc(window.width * window.height, sizeof(dgl_Color));
-	window.canvas.width = window.width;
-	window.canvas.height = window.height;
-	window.canvas.stride = window.width;
 
-	window.back_canvas.pixels = calloc(window.width * window.height, sizeof(dgl_Color));
-	window.back_canvas.width = window.width;
-	window.back_canvas.height = window.height;
-	window.back_canvas.stride = window.width;
+	window.canvas = dgl_create_canvas(window.width, window.height);
+	window.back_canvas = dgl_create_canvas(window.width, window.height);
+		
+	//window.canvas.pixels = calloc(window.width * window.height, sizeof(dgl_Color));
+	//window.canvas.z_indices = calloc(window.width * window.height, sizeof(dgl_Real));
+	//window.canvas.width = window.width;
+	//window.canvas.height = window.height;
+	//window.canvas.stride = window.width;
+	//
+	//window.back_canvas.pixels = calloc(window.width * window.height, sizeof(dgl_Color));
+	//window.back_canvas.z_indices = calloc(window.width * window.height, sizeof(dgl_Real));	
+	//window.back_canvas.width = window.width;
+	//window.back_canvas.height = window.height;
+	//window.back_canvas.stride = window.width;
 }
 
 void _windows_start(){
