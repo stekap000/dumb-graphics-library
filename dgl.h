@@ -179,8 +179,8 @@ DGLAPI dgl_Canvas dgl_create_canvas(int width, int height);
 DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color);
 DGLAPI dgl_Color dgl_read_pixel(dgl_Canvas *canvas, int x, int y);
 DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, dgl_Color color);
-DGLAPI int dgl_read_z_index(dgl_Canvas *canvas, int x, int y);
-DGLAPI void dgl_fill_z_index(dgl_Canvas *canvas, int x, int y, int z_index);
+DGLAPI float dgl_read_z_index(dgl_Canvas *canvas, int x, int y);
+DGLAPI void dgl_fill_z_index(dgl_Canvas *canvas, int x, int y, float z_index);
 DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, dgl_Color color);
 DGLAPI void dgl_fill_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, dgl_Color color);
 DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, size_t w, size_t h, dgl_Color color);
@@ -189,7 +189,7 @@ DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size
 DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color);
 DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color);
 DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color);
-DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color c1, dgl_Color c2, dgl_Color c3);
+DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, float z_index, dgl_Color c1, dgl_Color c2, dgl_Color c3);
 DGLAPI void dgl_draw_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color);
 DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color);
 DGLAPI void dgl_draw_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl_Mat proj_mat, dgl_Color color);
@@ -227,6 +227,8 @@ DGLAPI inline void		dgl_v3_unit_mut(dgl_V3 *v);
 DGLAPI void		 dgl_sort3(int *a, int *b, int *c);
 DGLAPI int		 dgl_min3(int a, int b, int c);
 DGLAPI int		 dgl_max3(int a, int b, int c);
+DGLAPI float	 dgl_min3f(float a, float b, float c);
+DGLAPI float	 dgl_max3f(float a, float b, float c);
 DGLAPI int		 dgl_clamp(int v, int left, int right);
 DGLAPI dgl_Color dgl_blend(dgl_Color f, dgl_Color b);
 DGLAPI dgl_Color dgl_bary_color(float s, float t, dgl_Color c1, dgl_Color c2, dgl_Color c3);
@@ -651,6 +653,12 @@ DGLAPI void dgl_clear(dgl_Canvas *canvas, dgl_Color color){
 			DGL_SET_PIXEL(*canvas, x, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x, y)));
 }
 
+DGLAPI void dgl_clear_z_index(dgl_Canvas *canvas, dgl_Real z_index) {
+	for(int y = 0; y < canvas->height; ++y)
+		for(int x = 0; x < canvas->width; ++x)
+			DGL_SET_Z_INDEX(*canvas, x, y, z_index);
+}
+
 DGLAPI dgl_Color dgl_read_pixel(dgl_Canvas *canvas, int x, int y) {
 	x = DGL_TRANSFORM_COORDINATES_X(x);
 	y = DGL_TRANSFORM_COORDINATES_Y(y, canvas->height);
@@ -668,12 +676,19 @@ DGLAPI void dgl_fill_pixel(dgl_Canvas *canvas, int x, int y, dgl_Color color) {
 	}
 }
 
-DGLAPI int dgl_read_z_index(dgl_Canvas *canvas, int x, int y) {
-	DGL_NOT_IMPLEMENTED("");
+DGLAPI float dgl_read_z_index(dgl_Canvas *canvas, int x, int y) {
+	x = DGL_TRANSFORM_COORDINATES_X(x);
+	y = DGL_TRANSFORM_COORDINATES_Y(y, canvas->height);
+	if(x >= 0 && x < canvas->width && y >= 0 && y < canvas->height)
+		return DGL_GET_Z_INDEX(*canvas, x, y);
+	return DGL_MAX_DISTANCE;
 }
 
-DGLAPI void dgl_fill_z_index(dgl_Canvas *canvas, int x, int y, int z_index) {
-	DGL_NOT_IMPLEMENTED("");
+DGLAPI void dgl_fill_z_index(dgl_Canvas *canvas, int x, int y, float z_index) {
+	x = DGL_TRANSFORM_COORDINATES_X(x);
+	y = DGL_TRANSFORM_COORDINATES_Y(y, canvas->height);
+	if(x >= 0 && x < canvas->width && y >= 0 && y < canvas->height)
+		DGL_SET_Z_INDEX(*canvas, x, y, z_index);
 }
 
 DGLAPI void dgl_draw_text(dgl_Canvas *canvas, const char *text, int x, int y, const dgl_Font *font, uint8_t scale, dgl_Bool vertical, dgl_Color color){
@@ -1103,7 +1118,7 @@ DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl
 // TODO: Feels like things can be optimized here, but it's not primary now
 // TODO: See how to adapt this code to SIMD
 // @Test It is roughly two times slower that other triangle filling function when using single color
-DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color c1, dgl_Color c2, dgl_Color c3){
+DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, float z_index, dgl_Color c1, dgl_Color c2, dgl_Color c3){
    	int x0 = DGL_TRANSFORM_COORDINATES_X(t.v[0].x);
 	int y0 = DGL_TRANSFORM_COORDINATES_Y(t.v[0].y, canvas->height);
 	int x1 = DGL_TRANSFORM_COORDINATES_X(t.v[1].x);
@@ -1124,12 +1139,16 @@ DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t
 		if(y > 0 && y < (int)canvas->height)
 			for(int x = bl; x <= br; ++x)
 				if(x > 0 && x < (int)canvas->width){
-					float l1 = ((y1-y2)*(x-x2) + (x2-x1)*(y-y2)) / denom;
-					float l2 = ((y2-y0)*(x-x2) + (x0-x2)*(y-y2)) / denom;
-					//float l3 = 1 - l1 - l2;
+						float l1 = ((y1-y2)*(x-x2) + (x2-x1)*(y-y2)) / denom;
+						float l2 = ((y2-y0)*(x-x2) + (x0-x2)*(y-y2)) / denom;
+						//float l3 = 1 - l1 - l2;
 
-					if(0 <= l1 && l1 <= 1 && 0 <= l2 && l2 <= 1 && (l1+l2) <= 1)
-						DGL_SET_PIXEL(*canvas, x, y, dgl_blend(dgl_bary_color(l1, l2, c1, c2, c3), DGL_GET_PIXEL(*canvas, x, y)));
+						if(0 <= l1 && l1 <= 1 && 0 <= l2 && l2 <= 1 && (l1+l2) <= 1) {
+							if(DGL_GET_Z_INDEX(*canvas, x, y) < z_index) {
+								DGL_SET_Z_INDEX(*canvas, x, y, z_index);
+								DGL_SET_PIXEL(*canvas, x, y, dgl_blend(dgl_bary_color(l1, l2, c1, c2, c3), DGL_GET_PIXEL(*canvas, x, y)));
+							}
+						}
 				}
 }
 
@@ -1152,9 +1171,15 @@ DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl
 	pt.v[1].y = t.v[1].y;
 	pt.v[2].x = t.v[2].x;
 	pt.v[2].y = t.v[2].y;
-
+	
 	//dgl_fill_triangle_2D(canvas, pt, color);
-	dgl_fill_triangle_bary_2D(canvas, pt, DGL_RED, DGL_GREEN, DGL_BLUE);
+
+	// Doesn't work in specific case when two triangles are connected
+	// but the portion of one is behind portion of the other.
+	//float z_index = dgl_min3f(t.v[0].z, t.v[1].z, t.v[2].z);
+
+	float z_index = (t.v[0].z + t.v[1].z + t.v[2].z);
+	dgl_fill_triangle_bary_2D(canvas, pt, z_index, DGL_RED, DGL_GREEN, DGL_BLUE);
 }
 
 // TODO: For now, we are just doing orthogonal projection because it requires minimal calculation. Move to perspective projection
@@ -1512,6 +1537,28 @@ DGLAPI int dgl_min3(int a, int b, int c){
 }
 
 DGLAPI int dgl_max3(int a, int b, int c){
+	if(a > b){
+		if(a > c) return a;
+		else return c;
+	}
+	else{
+		if(b > c) return b;
+		else return c;
+	}
+}
+
+DGLAPI float dgl_min3f(float a, float b, float c) {
+	if(a < b){
+		if(a < c) return a;
+		else return c;
+	}
+	else{
+		if(b < c) return b;
+		else return c;
+	}
+}
+
+DGLAPI float dgl_max3f(float a, float b, float c) {
 	if(a > b){
 		if(a > c) return a;
 		else return c;
