@@ -52,6 +52,8 @@
 #define DEFER_RETURN(v) do { DEFER_RESULT=v; goto DEFER; } while(0)
 
 #ifdef DGL_TARGET_WINDOWS
+    #define WIN32_LEAN_AND_MEAN
+
     #define DGL_RGB(r, g, b)     (((b) & 0xFF) | (((g) & 0xFF) << 8) | (((r) & 0xFF) << 16) | 0xFF000000)
     #define DGL_RGBA(r, g, b, a) (((b) & 0xFF) | (((g) & 0xFF) << 8) | (((r) & 0xFF) << 16) | (((a) & 0xFF) << 24))
     #define DGL_GET_ALPHA(color)    (((color) >> 24) & 0xFF)
@@ -1178,6 +1180,7 @@ DGLAPI void dgl_fill_triangle_3D(dgl_Canvas *canvas, const dgl_Triangle3D t, dgl
 	// but the portion of one is behind portion of the other.
 	//float z_index = dgl_min3f(t.v[0].z, t.v[1].z, t.v[2].z);
 
+	// TODO: This only covers nicely behaved meshes
 	float z_index = (t.v[0].z + t.v[1].z + t.v[2].z);
 	dgl_fill_triangle_bary_2D(canvas, pt, z_index, DGL_RED, DGL_GREEN, DGL_BLUE);
 }
@@ -1801,6 +1804,7 @@ int APIENTRY WinMain(HINSTANCE instance_handle, HINSTANCE prev_instance_handle, 
     wc.hInstance		= instance_handle;
     wc.lpszMenuName		= NULL;
 	wc.hbrBackground    = CreateSolidBrush(COLOR_WINDOW);
+	wc.hCursor          = LoadCursor(0, IDC_ARROW);
     wc.lpfnWndProc		= _window_procedure;
 
 	RegisterClassEx(&wc);
