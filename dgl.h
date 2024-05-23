@@ -235,16 +235,6 @@ DGLAPI int		 dgl_clamp(int v, int left, int right);
 DGLAPI dgl_Color dgl_blend(dgl_Color f, dgl_Color b);
 DGLAPI dgl_Color dgl_bary_color(float s, float t, dgl_Color c1, dgl_Color c2, dgl_Color c3);
 
-// TODO: Implement matrix operations (also provide simd in the future)
-DGLAPI dgl_Mat dgl_mat_alloc(int height, int width);
-DGLAPI void    dgl_mat_free(dgl_Mat m);
-DGLAPI void    dgl_mat_scale_mut(dgl_Mat m, dgl_Real s);
-DGLAPI void    dgl_mat_add_mut(dgl_Mat m1, dgl_Mat m2);
-DGLAPI dgl_Mat dgl_mat_mul_mut(dgl_Mat m1, dgl_Mat m2);
-DGLAPI void    dgl_mat_print(dgl_Mat m);
-DGLAPI void    dgl_mat4_add(dgl_Mat4 m1, dgl_Mat4 m2);
-DGLAPI void    dgl_mat4_compose(dgl_Mat4 m1, dgl_Mat4 m2);
-
 // TODO: Maybe do projection this way after implementing matrices, maybe do it dumber
 DGLAPI void dgl_init_proj_params(float fov_deg, float aspect_ratio, dgl_Real *l, dgl_Real *r, dgl_Real *t, dgl_Real *b, dgl_Real n, dgl_Real f);
 DGLAPI dgl_Mat dgl_mat_get_proj(dgl_Real l, dgl_Real r, dgl_Real t, dgl_Real b, dgl_Real n, dgl_Real f);
