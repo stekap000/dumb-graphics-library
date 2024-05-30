@@ -19,6 +19,7 @@ typedef struct {
 
 convex_shape shape1;
 convex_shape shape2;
+convex_shape minkowski_sum;
 
 void draw_convex_shape(convex_shape shape, dgl_Color color) {
 	for(int i = 0; i < shape.n; ++i) {
@@ -39,7 +40,7 @@ convex_shape minkowski_sum_shape(convex_shape shape1, convex_shape shape2) {
 	shape_sum.vertices = malloc(shape_sum.n * sizeof(dgl_V3));
 
 	for(int i = 0; i < shape1.n; ++i) {
-		for(int j = 0; j < shape2.n; ++i) {
+		for(int j = 0; j < shape2.n; ++j) {
 			shape_sum.vertices[i*shape2.n + j] = dgl_v3_add(shape1.vertices[i],
 															shape2.vertices[j]);
 		}
@@ -68,13 +69,15 @@ void start() {
 	shape2.vertices[1] = (dgl_V3){ .x = 20, .y = 20, .z = 0 };
 	shape2.vertices[2] = (dgl_V3){ .x = 20, .y = -20, .z = 0 };
 	shape2.vertices[3] = (dgl_V3){ .x = -20, .y = -20, .z = 0 };
+
+	minkowski_sum = minkowski_sum_shape(shape1, shape2);
 }
 
 void update(float dt) {
 	dgl_clear(&window.canvas, DGL_BLACK);
 	draw_convex_shape(shape1, DGL_RED);
 	draw_convex_shape(shape2, DGL_GREEN);
-	
+	draw_convex_shape(minkowski_sum, DGL_BLUE);
 	//p1.x = cursor_pos.x;
 	//p1.y = cursor_pos.y;
 }
