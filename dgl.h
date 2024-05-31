@@ -864,11 +864,11 @@ DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dg
 }
 
 DGLAPI void dgl_draw_vertical_line(dgl_Canvas *canvas, int x, dgl_Color color) {
-	DGL_NOT_IMPLEMENTED("");
+	dgl_draw_line(canvas, x, 0 - DGL_COORDINATE_CENTER_Y, x, canvas->height - DGL_COORDINATE_CENTER_Y, color);
 }
 
 DGLAPI void dgl_draw_horizontal_line(dgl_Canvas *canvas, int y, dgl_Color color) {
-	DGL_NOT_IMPLEMENTED("");
+	dgl_draw_line(canvas, 0 - DGL_COORDINATE_CENTER_X, y, canvas->width - DGL_COORDINATE_CENTER_X, y, color);
 }
 
 // TODO: It might be possible to not duplicate code in if and else parts because of symmetry
