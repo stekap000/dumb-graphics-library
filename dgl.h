@@ -852,6 +852,10 @@ DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dg
 	}
 	else{
 		if(x0 < 0 || x0 >= (int)canvas->width) return;
+
+		if(y0 > y1) {
+			DGL_SWAP(y0, y1, int);
+		}
 		
 		for(int y = y0; y <= y1; ++y)
 			if(y >= 0 && y < (int)canvas->height)
