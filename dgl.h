@@ -1754,13 +1754,13 @@ void _windows_update(HWND window_handle, float dt){
 
 	
 #ifndef DGL_USE_AUTOSCALE
-	cursor_pos.x = DGL_TRANSFORM_COORDINATES_X(cursor_pos.x);
+	cursor_pos.x = cursor_pos.x - DGL_COORDINATE_CENTER_X;
 	cursor_pos.y = DGL_TRANSFORM_COORDINATES_Y(cursor_pos.y, window.canvas.height);
 #else
 	// Allow small error in order to avoid float arithmetic.
 	_cursor_correction_x = (cursor_pos.x * window.canvas.width)/window.width;
 	_cursor_correction_y = (cursor_pos.y * window.canvas.height)/window.height;
-	cursor_pos.x = DGL_TRANSFORM_COORDINATES_X(_cursor_correction_x);
+	cursor_pos.x = _cursor_correction_x - DGL_COORDINATE_CENTER_X;
 	cursor_pos.y = DGL_TRANSFORM_COORDINATES_Y(_cursor_correction_y, window.canvas.height);
 #endif
 
