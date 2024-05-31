@@ -189,6 +189,8 @@ DGLAPI void dgl_draw_rect(dgl_Canvas *canvas, int top_left_x, int top_left_y, si
 DGLAPI void dgl_fill_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color);
 DGLAPI void dgl_draw_circle(dgl_Canvas *canvas, int center_x, int center_y, size_t r, dgl_Color color);
 DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color);
+DGLAPI void dgl_draw_vertical_line(dgl_Canvas *canvas, int x, dgl_Color color);
+DGLAPI void dgl_draw_horizontal_line(dgl_Canvas *canvas, int y, dgl_Color color);
 DGLAPI void dgl_draw_line_bresenham(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dgl_Color color);
 DGLAPI void dgl_fill_triangle_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, dgl_Color color);
 DGLAPI void dgl_fill_triangle_bary_2D(dgl_Canvas *canvas, const dgl_Triangle2D t, float z_index, dgl_Color c1, dgl_Color c2, dgl_Color c3);
@@ -855,6 +857,14 @@ DGLAPI void dgl_draw_line(dgl_Canvas *canvas, int x0, int y0, int x1, int y1, dg
 			if(y >= 0 && y < (int)canvas->height)
 				DGL_SET_PIXEL(*canvas, x0, y, dgl_blend(color, DGL_GET_PIXEL(*canvas, x0, y)));
 	}
+}
+
+DGLAPI void dgl_draw_vertical_line(dgl_Canvas *canvas, int x, dgl_Color color) {
+	DGL_NOT_IMPLEMENTED("");
+}
+
+DGLAPI void dgl_draw_horizontal_line(dgl_Canvas *canvas, int y, dgl_Color color) {
+	DGL_NOT_IMPLEMENTED("");
 }
 
 // TODO: It might be possible to not duplicate code in if and else parts because of symmetry
