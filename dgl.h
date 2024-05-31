@@ -1728,18 +1728,6 @@ void _windows_init(){
 
 	window.canvas = dgl_create_canvas(window.width, window.height);
 	window.back_canvas = dgl_create_canvas(window.width, window.height);
-		
-	//window.canvas.pixels = calloc(window.width * window.height, sizeof(dgl_Color));
-	//window.canvas.z_indices = calloc(window.width * window.height, sizeof(dgl_Real));
-	//window.canvas.width = window.width;
-	//window.canvas.height = window.height;
-	//window.canvas.stride = window.width;
-	//
-	//window.back_canvas.pixels = calloc(window.width * window.height, sizeof(dgl_Color));
-	//window.back_canvas.z_indices = calloc(window.width * window.height, sizeof(dgl_Real));	
-	//window.back_canvas.width = window.width;
-	//window.back_canvas.height = window.height;
-	//window.back_canvas.stride = window.width;
 }
 
 void _windows_start(){
@@ -1752,7 +1740,6 @@ void _windows_update(HWND window_handle, float dt){
 	GetCursorPos((POINT *)&cursor_pos);
 	ScreenToClient(window_handle, (POINT *)&cursor_pos);
 
-	
 #ifndef DGL_USE_AUTOSCALE
 	cursor_pos.x = cursor_pos.x - DGL_COORDINATE_CENTER_X;
 	cursor_pos.y = DGL_TRANSFORM_COORDINATES_Y(cursor_pos.y, window.canvas.height);
