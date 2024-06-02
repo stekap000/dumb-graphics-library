@@ -5,6 +5,9 @@
 #define DGL_IMPLEMENTATION
 #include "dgl.h"
 
+// Program created for the purpose of visualizing minkowski sum/diff in order
+// to get intuitive sense about it's behaviour.
+
 int width = 700;
 int height = 700;
 
@@ -39,6 +42,8 @@ convex_shape deep_copy_shape(convex_shape shape) {
 	return temp;
 }
 
+// Draw shape by drawing lines between all possible point.
+// Not efficient, but easy.
 void draw_convex_shape(convex_shape shape, dgl_Color color) {
 	for(int i = 0; i < shape.n; ++i) {
 		for(int j = 0; j < shape.n; ++j) {
