@@ -220,6 +220,7 @@ DGLAPI inline dgl_V3	dgl_v3_add(dgl_V3 v1, dgl_V3 v2);
 DGLAPI inline dgl_V3	dgl_v3_sub(dgl_V3 v1, dgl_V3 v2);
 DGLAPI inline dgl_V3	dgl_v3_scale(dgl_V3 v, dgl_Real s);
 DGLAPI inline dgl_Real	dgl_v3_dot(dgl_V3 v1, dgl_V3 v2);
+DGLAPI inline dgl_V3    dgl_v3_cross(dgl_V3 v1, dgl_V3 v2);
 DGLAPI inline dgl_Real	dgl_v3_lensq(dgl_V3 v);
 DGLAPI inline dgl_Real	dgl_v3_len(dgl_V3 v);
 DGLAPI inline dgl_V3	dgl_v3_unit(dgl_V3 v);
@@ -1491,6 +1492,11 @@ DGLAPI inline dgl_V3 dgl_v3_scale(dgl_V3 v, dgl_Real s){
 DGLAPI inline dgl_Real dgl_v3_dot(dgl_V3 v1, dgl_V3 v2){
 	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
+
+DGLAPI inline dgl_V3 dgl_v3_cross(dgl_V3 v1, dgl_V3 v2){	
+	return (dgl_V3){v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
+					v1.x * v2.y - v1.y * v2.x};
+} 
 
 DGLAPI inline dgl_Real dgl_v3_lensq(dgl_V3 v){
 	return dgl_v3_dot(v, v);
