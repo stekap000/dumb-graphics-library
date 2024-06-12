@@ -56,14 +56,14 @@ dgl_Bool update_simplex_and_direction_2d(simplex *s, dgl_V3 *d) {
 		dgl_V3 temp1 = dgl_v3_sub(s->points[0], s->points[2]); // AC
 		dgl_V3 temp2 = dgl_v3_sub(s->points[1], s->points[2]); // AB
 		dgl_V3 N = dgl_v3_cross(temp2, temp1);
-
+		
 		if(dgl_v3_dot(dgl_v3_cross(N, temp1), dgl_v3_scale(s->points[2], -1)) > 0) {
 			s->n = 2;
 			s->points[1] = s->points[2];
 			*d = dgl_v3_cross(dgl_v3_cross(temp1, dgl_v3_scale(s->points[2], -1)), temp1);
 		}
 		else {
-			if(dgl_v3_dot(dgl_v3_cross(temp2, N), dgl_v3_scale(s->points[2], -1)) > 0) {
+		    if(dgl_v3_dot(dgl_v3_cross(temp2, N), dgl_v3_scale(s->points[2], -1)) > 0) {
 				s->n = 2;
 				s->points[0] = s->points[2];
 				*d = dgl_v3_cross(dgl_v3_cross(temp2, dgl_v3_scale(s->points[2], -1)), temp2);
@@ -72,6 +72,45 @@ dgl_Bool update_simplex_and_direction_2d(simplex *s, dgl_V3 *d) {
 				return true;
 			}
 		}
+
+		/*
+		if(dgl_v3_dot(dgl_v3_cross(N, temp1), dgl_v3_scale(s->points[2], -1)) > 0) {
+			if(dgl_v3_dot(temp1, dgl_v3_scale(s->points[2], -1)) > 0) {
+				s->n = 2;
+				s->points[1] = s->points[2];
+				*d = dgl_v3_cross(dgl_v3_cross(temp1, dgl_v3_scale(s->points[2], -1)), temp1);
+			}
+			else {
+				if(dgl_v3_dot(temp2, dgl_v3_scale(s->points[2], -1)) > 0) {
+					s->n = 2;
+					s->points[0] = s->points[2];
+					*d = dgl_v3_cross(dgl_v3_cross(temp2, dgl_v3_scale(s->points[2], -1)), temp2);
+				}
+				else {
+					s->n = 1;
+					s->points[0] = s->points[2];
+					*d = dgl_v3_scale(s->points[2], -1);
+				}
+			}
+		}
+		else {
+			if(dgl_v3_dot(dgl_v3_cross(temp2, N), dgl_v3_scale(s->points[2], -1)) > 0) {
+				if(dgl_v3_dot(temp2, dgl_v3_scale(s->points[2], -1)) > 0) {
+					s->n = 2;
+					s->points[0] = s->points[2];
+					*d = dgl_v3_cross(dgl_v3_cross(temp2, dgl_v3_scale(s->points[2], -1)), temp2);
+				}
+				else {
+					s->n = 1;
+					s->points[0] = s->points[2];
+					*d = dgl_v3_scale(s->points[2], -1);
+				}
+			}
+			else {
+				return true;
+			}
+		}
+		*/
 	}
 	}
 
