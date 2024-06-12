@@ -79,17 +79,17 @@ dgl_Bool update_simplex_and_direction_2d(simplex *s, dgl_V3 *d) {
 }
 
 dgl_Bool gjk_2d(dgl_Simple_Model s1, dgl_Simple_Model s2) {
-	simplex s;
+	simplex s = {0};
 	dgl_V3 direction = {1, 0, 0};
+	dgl_V3 support_point = {0};
+	
 	// Start out with some point in minkowski diff.
-	dgl_V3 maybe_closest = minkowski_diff_support(s1, s2, direction);
-	add_point_to_simplex(&s, maybe_closest);
-
-	direction = dgl_v3_scale(maybe_closest, -1);
-
+	add_point_to_simplex(&s, minkowski_diff_support(s1, s2, direction));
+	direction = dgl_v3_scale(s.points[0], -1);
+	
 	while(true) {
 		// Furthest point in opposite direction (direction towards origin).
-		dgl_V3 support_point = minkowski_diff_support(s1, s2, direction);
+		support_point = minkowski_diff_support(s1, s2, direction);
 
 		// Support point didn't reach origin.
 		if(dgl_v3_dot(support_point, direction) < 0) return false;
@@ -164,12 +164,20 @@ dgl_V3 Z = {0, 0, 1};
 
 void update(float dt) {
 	dgl_V3 movement_direction = dgl_v3_cross(Z, shape1_center);
-	dgl_translate_simple_model(&shape1, dgl_v3_scale(movement_direction, dt));
-	dgl_v3_add_mut(&shape1_center, dgl_v3_scale(movement_direction, dt));
+	dgl_translate_simple_model(&shape1, dgl_v3_scale(movement_direction, dt*0.5));
+	dgl_v3_add_mut(&shape1_center, dgl_v3_scale(movement_direction, dt*0.5));
 	dgl_draw_simple_model_mesh(&window.canvas, &shape1, (dgl_Mat){0});
 
 	dgl_translate_simple_model(&shape2, (dgl_V3){cursor_pos.x, cursor_pos.y, 0});
 	dgl_draw_simple_model_mesh(&window.canvas, &shape2, (dgl_Mat){0});
+
+	if(gjk_2d(shape1, shape2)) {
+		shape1.colors[0] = DGL_BLUE;
+	}
+	else {
+		shape1.colors[0] = DGL_GREEN;
+	}
+
 	dgl_translate_simple_model(&shape2, (dgl_V3){-cursor_pos.x, -cursor_pos.y, 0});
 }
 
