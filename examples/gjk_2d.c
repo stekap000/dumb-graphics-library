@@ -51,6 +51,7 @@ dgl_Bool update_simplex_and_direction_2d(simplex *s, dgl_V3 *d) {
 	case 2: {
 		dgl_V3 temp = dgl_v3_sub(s->points[0], s->points[1]);
 		*d = dgl_v3_cross(dgl_v3_cross(temp, dgl_v3_scale(s->points[1], -1)), temp);
+		break;
 	}
 	case 3: {
 		dgl_V3 temp1 = dgl_v3_sub(s->points[0], s->points[2]); // AC
@@ -112,6 +113,8 @@ dgl_Bool update_simplex_and_direction_2d(simplex *s, dgl_V3 *d) {
 		}
 		*/
 	}
+	default:
+		return false;
 	}
 
 	return false;
