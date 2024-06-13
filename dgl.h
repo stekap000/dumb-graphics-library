@@ -48,6 +48,7 @@
 
 #define DGL_PI 3.14159265358
 #define DGL_MAX_DISTANCE -1000000000
+#define DGL_MAX_FLOAT 3.402823466e+38F
 
 #define DEFER_RETURN(v) do { DEFER_RESULT=v; goto DEFER; } while(0)
 
