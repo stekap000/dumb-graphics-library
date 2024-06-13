@@ -20,7 +20,7 @@ typedef struct {
 } simplex;
 
 dgl_V3 support(dgl_Simple_Model s, dgl_V3 direction) {
-	float max = -999999;
+	float max = -999999999;
 	float temp = 0;
 	int temp_i = 0;
 	for(int i = 0; i < s.vertices_length; ++i) {
@@ -73,48 +73,7 @@ dgl_Bool update_simplex_and_direction_2d(simplex *s, dgl_V3 *d) {
 				return true;
 			}
 		}
-
-		/*
-		if(dgl_v3_dot(dgl_v3_cross(N, temp1), dgl_v3_scale(s->points[2], -1)) > 0) {
-			if(dgl_v3_dot(temp1, dgl_v3_scale(s->points[2], -1)) > 0) {
-				s->n = 2;
-				s->points[1] = s->points[2];
-				*d = dgl_v3_cross(dgl_v3_cross(temp1, dgl_v3_scale(s->points[2], -1)), temp1);
-			}
-			else {
-				if(dgl_v3_dot(temp2, dgl_v3_scale(s->points[2], -1)) > 0) {
-					s->n = 2;
-					s->points[0] = s->points[2];
-					*d = dgl_v3_cross(dgl_v3_cross(temp2, dgl_v3_scale(s->points[2], -1)), temp2);
-				}
-				else {
-					s->n = 1;
-					s->points[0] = s->points[2];
-					*d = dgl_v3_scale(s->points[2], -1);
-				}
-			}
-		}
-		else {
-			if(dgl_v3_dot(dgl_v3_cross(temp2, N), dgl_v3_scale(s->points[2], -1)) > 0) {
-				if(dgl_v3_dot(temp2, dgl_v3_scale(s->points[2], -1)) > 0) {
-					s->n = 2;
-					s->points[0] = s->points[2];
-					*d = dgl_v3_cross(dgl_v3_cross(temp2, dgl_v3_scale(s->points[2], -1)), temp2);
-				}
-				else {
-					s->n = 1;
-					s->points[0] = s->points[2];
-					*d = dgl_v3_scale(s->points[2], -1);
-				}
-			}
-			else {
-				return true;
-			}
-		}
-		*/
 	}
-	default:
-		return false;
 	}
 
 	return false;
@@ -188,7 +147,7 @@ void start() {
 	};
 	shape1_center = (dgl_V3){100, 0, 0};
 	dgl_scale_simple_model(&shape1, 100);
-	//dgl_translate_simple_model(&shape1, shape1_center);
+	dgl_translate_simple_model(&shape1, shape1_center);
 
 	shape2 = (dgl_Simple_Model){
 		.vertices = shape2_vertices,
@@ -205,9 +164,9 @@ void start() {
 dgl_V3 Z = {0, 0, 1};
 
 void update(float dt) {
-	//dgl_V3 movement_direction = dgl_v3_cross(Z, shape1_center);
-	//dgl_translate_simple_model(&shape1, dgl_v3_scale(movement_direction, dt*0.5));
-	//dgl_v3_add_mut(&shape1_center, dgl_v3_scale(movement_direction, dt*0.5));
+	dgl_V3 movement_direction = dgl_v3_cross(Z, shape1_center);
+	dgl_translate_simple_model(&shape1, dgl_v3_scale(movement_direction, dt));
+	dgl_v3_add_mut(&shape1_center, dgl_v3_scale(movement_direction, dt));
 	dgl_draw_simple_model_mesh(&window.canvas, &shape1, (dgl_Mat){0});
 
 	dgl_translate_simple_model(&shape2, (dgl_V3){cursor_pos.x, cursor_pos.y, 0});
