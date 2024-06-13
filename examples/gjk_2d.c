@@ -20,7 +20,7 @@ typedef struct {
 } simplex;
 
 dgl_V3 support(dgl_Simple_Model s, dgl_V3 direction) {
-	float max = -999999999;
+	float max = -DGL_MAX_FLOAT;
 	float temp = 0;
 	int temp_i = 0;
 	for(int i = 0; i < s.vertices_length; ++i) {
@@ -57,17 +57,18 @@ dgl_Bool update_simplex_and_direction_2d(simplex *s, dgl_V3 *d) {
 		dgl_V3 temp1 = dgl_v3_sub(s->points[0], s->points[2]); // AC
 		dgl_V3 temp2 = dgl_v3_sub(s->points[1], s->points[2]); // AB
 		dgl_V3 N = dgl_v3_cross(temp2, temp1);
+		dgl_V3 minus_A = dgl_v3_scale(s->points[2], -1);
 
-		if(dgl_v3_dot(dgl_v3_cross(N, temp1), dgl_v3_scale(s->points[2], -1)) > 0) {
+		if(dgl_v3_dot(dgl_v3_cross(N, temp1), minus_A) > 0) {
 			s->n = 2;
 			s->points[1] = s->points[2];
-			*d = dgl_v3_cross(dgl_v3_cross(temp1, dgl_v3_scale(s->points[2], -1)), temp1);
+			*d = dgl_v3_cross(dgl_v3_cross(temp1, minus_A), temp1);
 		}
 		else {
-		    if(dgl_v3_dot(dgl_v3_cross(temp2, N), dgl_v3_scale(s->points[2], -1)) > 0) {
+		    if(dgl_v3_dot(dgl_v3_cross(temp2, N), minus_A) > 0) {
 				s->n = 2;
 				s->points[0] = s->points[2];
-				*d = dgl_v3_cross(dgl_v3_cross(temp2, dgl_v3_scale(s->points[2], -1)), temp2);
+				*d = dgl_v3_cross(dgl_v3_cross(temp2, minus_A), temp2);
 			}
 			else {
 				return true;
