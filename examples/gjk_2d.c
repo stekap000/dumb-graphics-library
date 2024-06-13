@@ -56,7 +56,7 @@ dgl_Bool update_simplex_and_direction_2d(simplex *s, dgl_V3 *d) {
 		dgl_V3 temp1 = dgl_v3_sub(s->points[0], s->points[2]); // AC
 		dgl_V3 temp2 = dgl_v3_sub(s->points[1], s->points[2]); // AB
 		dgl_V3 N = dgl_v3_cross(temp2, temp1);
-		
+
 		if(dgl_v3_dot(dgl_v3_cross(N, temp1), dgl_v3_scale(s->points[2], -1)) > 0) {
 			s->n = 2;
 			s->points[1] = s->points[2];
@@ -185,7 +185,7 @@ void start() {
 	};
 	shape1_center = (dgl_V3){100, 0, 0};
 	dgl_scale_simple_model(&shape1, 100);
-	dgl_translate_simple_model(&shape1, shape1_center);
+	//dgl_translate_simple_model(&shape1, shape1_center);
 
 	shape2 = (dgl_Simple_Model){
 		.vertices = shape2_vertices,
@@ -202,14 +202,23 @@ void start() {
 dgl_V3 Z = {0, 0, 1};
 
 void update(float dt) {
-	dgl_V3 movement_direction = dgl_v3_cross(Z, shape1_center);
-	dgl_translate_simple_model(&shape1, dgl_v3_scale(movement_direction, dt*0.5));
-	dgl_v3_add_mut(&shape1_center, dgl_v3_scale(movement_direction, dt*0.5));
+	//dgl_V3 movement_direction = dgl_v3_cross(Z, shape1_center);
+	//dgl_translate_simple_model(&shape1, dgl_v3_scale(movement_direction, dt*0.5));
+	//dgl_v3_add_mut(&shape1_center, dgl_v3_scale(movement_direction, dt*0.5));
 	dgl_draw_simple_model_mesh(&window.canvas, &shape1, (dgl_Mat){0});
 
 	dgl_translate_simple_model(&shape2, (dgl_V3){cursor_pos.x, cursor_pos.y, 0});
 	dgl_draw_simple_model_mesh(&window.canvas, &shape2, (dgl_Mat){0});
 
+	dgl_V3 sp1 = support(shape1, (dgl_V3){cursor_pos.x, cursor_pos.y, 0});
+	dgl_fill_circle(&window.canvas, sp1.x, sp1.y, 5, DGL_YELLOW);
+
+	dgl_V3 sp2 = support(shape2, (dgl_V3){cursor_pos.x, cursor_pos.y, 0});
+	dgl_fill_circle(&window.canvas, sp2.x, sp2.y, 5, DGL_YELLOW);
+
+	dgl_V3 sp = minkowski_diff_support(shape1, shape2, (dgl_V3){cursor_pos.x, cursor_pos.y, 0});
+	dgl_fill_circle(&window.canvas, sp.x, sp.y, 5, DGL_YELLOW);
+ 
 	if(gjk_2d(shape1, shape2)) {
 		shape1.colors[0] = DGL_BLUE;
 	}
