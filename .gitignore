@@ -1,0 +1,10 @@
+*~
+*.exe
+*#*
+*.ilk
+*.obj
+!models/*.obj
+*.pdb
+*.rdi
+*cache*
+*compile_commands*
