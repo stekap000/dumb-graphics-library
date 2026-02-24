@@ -1,4 +1,28 @@
 ## Dumb graphics library
+
+### Preview
+
+#### Hypercube rotation
+https://github.com/user-attachments/assets/bc46fc08-2ec9-44fe-b6d1-2f21f80f1a29
+
+#### Circle inversion
+https://github.com/user-attachments/assets/2aacaac8-cc74-4852-ab73-671574ee4a00
+
+#### Model mesh rendering
+https://github.com/user-attachments/assets/41a0ff5b-92c7-44db-a4ee-8d752ee6a5f3
+
+#### 2D GJK collision
+https://github.com/user-attachments/assets/d33f6e99-c313-46dd-9021-ab739642f57a
+
+#### Bezier curves
+https://github.com/user-attachments/assets/99b53480-ed1d-44bb-b166-345944c71730
+
+#### Barnsley fern
+<img src="images/barnsley_fern.PNG" width="400" height="auto">
+
+#### Library source code binary analysis (Chris Domas byte pair representation)
+<img src="images/domas_source_code_analysis.PNG" width="400" height="auto">
+
 ### General information
 * Library executes code on CPU without parallelization (SIMD support might get added at some point).
 * At any point, library contains functions or types that still serve no purpose, or are there just for experimentation.
